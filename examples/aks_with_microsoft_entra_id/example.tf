@@ -3,7 +3,6 @@
 ##-----------------------------------------------------------------------------
 provider "azurerm" {
   features {}
-  subscription_id = "1ac2caa4-336e-4daa-b8f1-0fbabe2d4b11"
 }
 
 data "azurerm_client_config" "current_client_config" {}
@@ -135,19 +134,19 @@ module "aks" {
   }
   ## Microsoft entra_id integration
   local_account_disabled = true
-  admin_group_id         = ["a64f3fc2-0681-4011-9dab-b288a6835ae0"]
+  admin_group_id         = ["***ed"]
 
   role_based_access_control = [{
-    managed                = true
-    tenant_id              = "bcffb719-9620-4b7c-b1b0-87ebfb2f7bdd"
-    admin_group_object_ids = ["a64f3fc2-0681-4011-9dab-b288a6835ae0"] # Complete object ID
-    azure_rbac_enabled     = true
+    managed   = true
+    tenant_id = "b****f7bdd" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
+    #admin_group_object_ids = ["*****-b3da-46c5-b672-fbc9bf0b****"] ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
+    azure_rbac_enabled = true
   }]
 
   aks_user_auth_role = [{
-    scope                = module.resource_group.resource_group_id
+    scope                = "/subscriptions/0**5e1cabc60c/resourceGroups/public-app-test-resource-group/providers/Microsoft.ContainerService/managedClusters/app1-test-aks1/namespaces/test"
     role_definition_name = "Azure Kubernetes Service RBAC Admin"
-    principal_id         = "a64f3fc2-0681-4011-9dab-b288a6835ae0"
+    principal_id         = "***-**-***-**-***" # user or group object id 
   }]
 
   log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
