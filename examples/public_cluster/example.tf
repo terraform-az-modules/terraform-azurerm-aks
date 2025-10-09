@@ -33,6 +33,9 @@ module "vnet" {
   address_spaces      = ["10.0.0.0/16"]
 }
 
+##-----------------------------------------------------------------------------
+## Subnet
+##-----------------------------------------------------------------------------
 module "subnet" {
   source               = "terraform-az-modules/subnet/azure"
   version              = "1.0.0"
@@ -134,48 +137,4 @@ module "aks" {
     node_labels                   = {}
     only_critical_addons_enabled  = true
   }
-
-  # node_pools = {
-  #   testpool = {
-  #     vm_size                       = "Standard_D2s_v5"
-  #     os_type                       = "Linux"
-  #     vnet_subnet_id                = module.subnet.subnet_ids.subnet1
-  #     node_count                    = 1
-  #     mode                          = "User"
-  #     os_disk_type                  = null
-  #     os_disk_size_gb               = null
-  #     enable_auto_scaling           = null
-  #     enable_host_encryption        = null
-  #     eviction_policy               = null
-  #     gpu_instance                  = null
-  #     gpu_driver                    = null
-  #     node_public_ip_prefix_id      = null
-  #     os_sku                        = null
-  #     priority                      = null
-  #     temporary_name_for_rotation   = null
-  #     min_count                     = null
-  #     max_count                     = null
-  #     max_pods                      = null
-  #     enable_node_public_ip         = null
-  #     orchestrator_version          = null
-  #     node_taints                   = null
-  #     host_group_id                 = null
-  #     zones                         = null
-  #     max_surge                     = null
-  #     node_soak_duration_in_minutes = null
-  #     drain_timeout_in_minutes      = null
-  #     capacity_reservation_group_id = null
-  #     workload_runtime              = null
-  #     fips_enabled                  = null
-  #     kubelet_disk_type             = null
-  #     node_labels                   = null
-  #     pod_subnet_id                 = null
-  #     proximity_placement_group_id  = null
-  #     scale_down_mode               = null
-  #     snapshot_id                   = null
-  #     spot_max_price                = null
-  #     tags                          = null
-  #     ultra_ssd_enabled             = null
-  #   }
-  # }
 }

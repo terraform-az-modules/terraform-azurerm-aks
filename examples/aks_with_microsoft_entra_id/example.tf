@@ -33,6 +33,9 @@ module "vnet" {
   address_spaces      = ["10.0.0.0/16"]
 }
 
+##-----------------------------------------------------------------------------
+## Subnet
+##-----------------------------------------------------------------------------
 module "subnet" {
   source               = "terraform-az-modules/subnet/azure"
   version              = "1.0.0"
@@ -63,7 +66,6 @@ module "log-analytics" {
   location                    = module.resource_group.resource_group_location
   log_analytics_workspace_id  = module.log-analytics.workspace_id
 }
-
 
 module "vault" {
   source                        = "terraform-az-modules/key-vault/azure"
