@@ -1,129 +1,75 @@
-## Managed By : CloudDrove
-## Copyright @ CloudDrove. All Right Reserved.
-
-## Vritual Network and Subnet Creation
+##-----------------------------------------------------------------------------
+## Tagging Module – Applies standard tags to all resources
+##-----------------------------------------------------------------------------
+module "labels" {
+  source          = "terraform-az-modules/tags/azure"
+  version         = "1.0.0"
+  name            = var.custom_name == null ? var.name : var.custom_name
+  location        = var.location
+  environment     = var.environment
+  managedby       = var.managedby
+  label_order     = var.label_order
+  repository      = var.repository
+  deployment_mode = var.deployment_mode
+  extra_tags      = var.extra_tags
+}
 
 data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
-
-locals {
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  default_agent_profile = {
-    name                          = "agentpool"
-    count                         = 1
-    vm_size                       = "Standard_D2_v3"
-    os_type                       = "Linux"
-    enable_auto_scaling           = false
-    enable_host_encryption        = true
-    min_count                     = null
-    max_count                     = null
-    type                          = "VirtualMachineScaleSets"
-    node_taints                   = null
-    vnet_subnet_id                = var.nodes_subnet_id
-    max_pods                      = 30
-    os_disk_type                  = "Managed"
-    os_disk_size_gb               = 128
-    host_group_id                 = null
-    orchestrator_version          = null
-    enable_node_public_ip         = false
-    mode                          = "System"
-    node_soak_duration_in_minutes = null
-    max_surge                     = null
-    drain_timeout_in_minutes      = null
-  }
-
-  default_node_pool         = merge(local.default_agent_profile, var.default_node_pool)
-  nodes_pools_with_defaults = [for ap in var.nodes_pools : merge(local.default_agent_profile, ap)]
-  nodes_pools               = [for ap in local.nodes_pools_with_defaults : ap.os_type == "Linux" ? merge(local.default_linux_node_profile, ap) : merge(local.default_windows_node_profile, ap)]
-  # Defaults for Linux profile
-  # Generally smaller images so can run more pods and require smaller HD
-  default_linux_node_profile = {
-    max_pods        = 30
-    os_disk_size_gb = 128
-  }
-
-  # Defaults for Windows profile
-  # Do not want to run same number of pods and some images can be quite large
-  default_windows_node_profile = {
-    max_pods        = 20
-    os_disk_size_gb = 256
-  }
-}
-
-module "labels" {
-
-  source      = "clouddrove/labels/azure"
-  version     = "1.0.0"
-  name        = var.name
-  environment = var.environment
-  managedby   = var.managedby
-  label_order = var.label_order
-  repository  = var.repository
-}
-
-locals {
-  private_dns_zone = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
-}
-
 resource "azurerm_kubernetes_cluster" "aks" {
-  count                             = var.enabled ? 1 : 0
-  name                              = format("%s-aks", module.labels.id)
-  location                          = local.location
-  resource_group_name               = local.resource_group_name
+  count                             = var.enable ? 1 : 0
+  name                              = var.resource_position_prefix ? format("aks-%s", local.name) : format("%s-aks", local.name)
+  location                          = var.location
+  resource_group_name               = var.resource_group_name
   dns_prefix                        = replace(module.labels.id, "/[\\W_]/", "-")
   kubernetes_version                = var.kubernetes_version
-  automatic_channel_upgrade         = var.automatic_channel_upgrade
+  automatic_upgrade_channel         = var.automatic_channel_upgrade
   sku_tier                          = var.aks_sku_tier
-  node_resource_group               = var.node_resource_group == null ? format("%s-aks-node-rg", module.labels.id) : var.node_resource_group
+  node_resource_group               = var.node_resource_group == null ? format("%s-aks-node-rg", local.name) : var.node_resource_group
   disk_encryption_set_id            = var.key_vault_id != null ? azurerm_disk_encryption_set.main[0].id : null
   private_cluster_enabled           = var.private_cluster_enabled
-  private_dns_zone_id               = var.private_cluster_enabled ? local.private_dns_zone : null
-  http_application_routing_enabled  = var.enable_http_application_routing
+  private_dns_zone_id               = var.private_cluster_enabled ? var.private_dns_zone_id : null
   azure_policy_enabled              = var.azure_policy_enabled
   edge_zone                         = var.edge_zone
   image_cleaner_enabled             = var.image_cleaner_enabled
   image_cleaner_interval_hours      = var.image_cleaner_interval_hours
   role_based_access_control_enabled = var.role_based_access_control_enabled
   local_account_disabled            = var.local_account_disabled
-
   dynamic "default_node_pool" {
-    for_each = var.enable_auto_scaling == true ? ["default_node_pool_auto_scaled"] : []
-
+    for_each = var.default_node_pool_config.enable_auto_scaling == false ? [var.default_node_pool_config] : []
     content {
-      name                         = var.agents_pool_name
-      vm_size                      = var.agents_size
-      enable_auto_scaling          = var.enable_auto_scaling
-      enable_host_encryption       = var.enable_host_encryption
-      enable_node_public_ip        = var.enable_node_public_ip
-      fips_enabled                 = var.default_node_pool_fips_enabled
-      max_count                    = var.agents_max_count
-      max_pods                     = var.agents_max_pods
-      min_count                    = var.agents_min_count
-      node_labels                  = var.agents_labels
-      only_critical_addons_enabled = var.only_critical_addons_enabled
-      orchestrator_version         = var.orchestrator_version
-      os_disk_size_gb              = var.os_disk_size_gb
-      os_disk_type                 = var.os_disk_type
-      os_sku                       = var.os_sku
-      pod_subnet_id                = var.pod_subnet_id
-      proximity_placement_group_id = var.agents_proximity_placement_group_id
-      scale_down_mode              = var.scale_down_mode
-      snapshot_id                  = var.snapshot_id
-      tags                         = merge(var.tags, var.agents_tags)
-      temporary_name_for_rotation  = var.temporary_name_for_rotation
-      type                         = var.agents_type
-      ultra_ssd_enabled            = var.ultra_ssd_enabled
-      vnet_subnet_id               = var.vnet_subnet_id
-      zones                        = var.agents_availability_zones
-
+      name                         = default_node_pool.value.name
+      node_count                   = default_node_pool.value.node_count
+      vm_size                      = default_node_pool.value.vm_size
+      auto_scaling_enabled         = default_node_pool.value.enable_auto_scaling
+      host_encryption_enabled      = default_node_pool.value.enable_host_encryption
+      max_count                    = default_node_pool.value.max_count
+      min_count                    = default_node_pool.value.min_count
+      max_pods                     = default_node_pool.value.max_pods
+      node_labels                  = default_node_pool.value.node_labels
+      node_public_ip_enabled       = default_node_pool.value.enable_node_public_ip
+      only_critical_addons_enabled = default_node_pool.value.only_critical_addons_enabled
+      orchestrator_version         = default_node_pool.value.orchestrator_version
+      os_disk_size_gb              = default_node_pool.value.os_disk_size_gb
+      os_disk_type                 = default_node_pool.value.os_disk_type
+      os_sku                       = default_node_pool.value.os_sku
+      proximity_placement_group_id = default_node_pool.value.proximity_placement_group_id
+      type                         = default_node_pool.value.type
+      vnet_subnet_id               = default_node_pool.value.vnet_subnet_id
+      zones                        = default_node_pool.value.zones
+      fips_enabled                 = default_node_pool.value.fips_enabled
+      scale_down_mode              = default_node_pool.value.scale_down_mode
+      snapshot_id                  = default_node_pool.value.snapshot_id
+      temporary_name_for_rotation  = default_node_pool.value.temporary_name_for_rotation
+      ultra_ssd_enabled            = default_node_pool.value.ultra_ssd_enabled
+      pod_subnet_id                = default_node_pool.value.pod_subnet_id
+      tags                         = merge(module.labels.tags, default_node_pool.value.tags)
       node_network_profile {
         node_public_ip_tags = var.node_public_ip_tags
       }
       dynamic "kubelet_config" {
         for_each = var.agents_pool_kubelet_configs
-
         content {
           allowed_unsafe_sysctls    = kubelet_config.value.allowed_unsafe_sysctls
           container_log_max_line    = kubelet_config.value.container_log_max_line
@@ -139,15 +85,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
       dynamic "linux_os_config" {
         for_each = var.agents_pool_linux_os_configs
-
         content {
-          swap_file_size_mb             = linux_os_config.value.swap_file_size_mb
-          transparent_huge_page_defrag  = linux_os_config.value.transparent_huge_page_defrag
-          transparent_huge_page_enabled = linux_os_config.value.transparent_huge_page_enabled
-
+          swap_file_size_mb            = linux_os_config.value.swap_file_size_mb
+          transparent_huge_page_defrag = linux_os_config.value.transparent_huge_page_defrag
+          transparent_huge_page        = linux_os_config.value.transparent_huge_page
           dynamic "sysctl_config" {
             for_each = linux_os_config.value.sysctl_configs == null ? [] : linux_os_config.value.sysctl_configs
-
             content {
               fs_aio_max_nr                      = sysctl_config.value.fs_aio_max_nr
               fs_file_max                        = sysctl_config.value.fs_file_max
@@ -184,45 +127,26 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
     }
   }
-
   dynamic "aci_connector_linux" {
     for_each = var.aci_connector_linux_enabled ? ["aci_connector_linux"] : []
-
     content {
       subnet_name = var.aci_connector_linux_subnet_name
     }
   }
-
-
-  dynamic "ingress_application_gateway" {
-    for_each = toset(var.ingress_application_gateway != null ? [var.ingress_application_gateway] : [])
-
-    content {
-      gateway_id   = ingress_application_gateway.value.gateway_id
-      gateway_name = ingress_application_gateway.value.gateway_name
-      subnet_cidr  = ingress_application_gateway.value.subnet_cidr
-      subnet_id    = ingress_application_gateway.value.subnet_id
-    }
-  }
-
   dynamic "key_management_service" {
     for_each = var.kms_enabled ? ["key_management_service"] : []
-
     content {
       key_vault_key_id         = var.kms_key_vault_key_id
       key_vault_network_access = var.kms_key_vault_network_access
     }
   }
-
   dynamic "key_vault_secrets_provider" {
     for_each = var.key_vault_secrets_provider_enabled ? ["key_vault_secrets_provider"] : []
-
     content {
       secret_rotation_enabled  = var.secret_rotation_enabled
       secret_rotation_interval = var.secret_rotation_interval
     }
   }
-
   dynamic "kubelet_identity" {
     for_each = var.kubelet_identity == null ? [] : [var.kubelet_identity]
     content {
@@ -231,38 +155,29 @@ resource "azurerm_kubernetes_cluster" "aks" {
       user_assigned_identity_id = kubelet_identity.value.user_assigned_identity_id
     }
   }
-
   dynamic "http_proxy_config" {
-    for_each = var.enable_http_proxy ? [1] : []
-
+    for_each = var.enable_http_proxy && var.http_proxy_config != null ? [var.http_proxy_config] : []
     content {
-      http_proxy  = var.http_proxy_config.http_proxy
-      https_proxy = var.http_proxy_config.https_proxy
-      no_proxy    = var.http_proxy_config.no_proxy
+      http_proxy  = http_proxy_config.value.http_proxy
+      https_proxy = http_proxy_config.value.https_proxy
+      no_proxy    = http_proxy_config.value.no_proxy
+      trusted_ca  = try(http_proxy_config.value.trusted_ca, null)
     }
   }
-
   dynamic "confidential_computing" {
     for_each = var.confidential_computing == null ? [] : [var.confidential_computing]
-
     content {
       sgx_quote_helper_enabled = confidential_computing.value.sgx_quote_helper_enabled
     }
   }
-
   dynamic "api_server_access_profile" {
-    for_each = var.api_server_access_profile != null ? [1] : []
-
+    for_each = var.api_server_access_profile != null ? [var.api_server_access_profile] : []
     content {
-      authorized_ip_ranges     = var.api_server_access_profile.authorized_ip_ranges
-      vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
-      subnet_id                = var.api_server_access_profile.subnet_id
+      authorized_ip_ranges = api_server_access_profile.value.authorized_ip_ranges
     }
   }
-
   dynamic "auto_scaler_profile" {
     for_each = var.auto_scaler_profile_enabled ? [var.auto_scaler_profile] : []
-
     content {
       balance_similar_node_groups      = auto_scaler_profile.value.balance_similar_node_groups
       empty_bulk_delete_max            = auto_scaler_profile.value.empty_bulk_delete_max
@@ -283,7 +198,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
       skip_nodes_with_system_pods      = auto_scaler_profile.value.skip_nodes_with_system_pods
     }
   }
-
   dynamic "maintenance_window_auto_upgrade" {
     for_each = var.maintenance_window_auto_upgrade == null ? [] : [var.maintenance_window_auto_upgrade]
     content {
@@ -306,7 +220,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
     }
   }
-
   dynamic "maintenance_window_node_os" {
     for_each = var.maintenance_window_node_os == null ? [] : [var.maintenance_window_node_os]
     content {
@@ -329,69 +242,74 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
     }
   }
-
   dynamic "azure_active_directory_role_based_access_control" {
     for_each = var.role_based_access_control == null ? [] : var.role_based_access_control
     content {
-      managed                = azure_active_directory_role_based_access_control.value.managed
       tenant_id              = azure_active_directory_role_based_access_control.value.tenant_id
       admin_group_object_ids = !azure_active_directory_role_based_access_control.value.azure_rbac_enabled ? var.admin_group_id : null
       azure_rbac_enabled     = azure_active_directory_role_based_access_control.value.azure_rbac_enabled
     }
   }
-  default_node_pool {
-    name                        = local.default_node_pool.name
-    node_count                  = local.default_node_pool.count
-    vm_size                     = local.default_node_pool.vm_size
-    enable_auto_scaling         = local.default_node_pool.enable_auto_scaling
-    min_count                   = local.default_node_pool.min_count
-    max_count                   = local.default_node_pool.max_count
-    max_pods                    = local.default_node_pool.max_pods
-    os_disk_type                = local.default_node_pool.os_disk_type
-    os_disk_size_gb             = local.default_node_pool.os_disk_size_gb
-    type                        = local.default_node_pool.type
-    vnet_subnet_id              = local.default_node_pool.vnet_subnet_id
-    temporary_name_for_rotation = var.temporary_name_for_rotation
-    enable_host_encryption      = local.default_node_pool.enable_host_encryption
-    dynamic "upgrade_settings" {
-      for_each = local.default_node_pool.max_surge == null ? [] : ["upgrade_settings"]
-
-      content {
-        max_surge                     = local.default_node_pool.max_surge
-        node_soak_duration_in_minutes = local.default_node_pool.node_soak_duration_in_minutes
-        drain_timeout_in_minutes      = local.default_node_pool.drain_timeout_in_minutes
+  dynamic "default_node_pool" {
+    for_each = var.default_node_pool_config.enable_auto_scaling == true ? [var.default_node_pool_config] : []
+    content {
+      name                         = default_node_pool.value.name
+      vm_size                      = default_node_pool.value.vm_size
+      auto_scaling_enabled         = default_node_pool.value.enable_auto_scaling
+      host_encryption_enabled      = default_node_pool.value.enable_host_encryption
+      max_count                    = default_node_pool.value.max_count
+      min_count                    = default_node_pool.value.min_count
+      max_pods                     = default_node_pool.value.max_pods
+      node_labels                  = default_node_pool.value.node_labels
+      node_public_ip_enabled       = default_node_pool.value.enable_node_public_ip
+      only_critical_addons_enabled = default_node_pool.value.only_critical_addons_enabled
+      orchestrator_version         = default_node_pool.value.orchestrator_version
+      os_disk_size_gb              = default_node_pool.value.os_disk_size_gb
+      os_disk_type                 = default_node_pool.value.os_disk_type
+      os_sku                       = default_node_pool.value.os_sku
+      proximity_placement_group_id = default_node_pool.value.proximity_placement_group_id
+      type                         = default_node_pool.value.type
+      vnet_subnet_id               = default_node_pool.value.vnet_subnet_id
+      zones                        = default_node_pool.value.zones
+      fips_enabled                 = default_node_pool.value.fips_enabled
+      scale_down_mode              = default_node_pool.value.scale_down_mode
+      snapshot_id                  = default_node_pool.value.snapshot_id
+      temporary_name_for_rotation  = default_node_pool.value.temporary_name_for_rotation
+      ultra_ssd_enabled            = default_node_pool.value.ultra_ssd_enabled
+      pod_subnet_id                = default_node_pool.value.pod_subnet_id
+      tags                         = merge(module.labels.tags, default_node_pool.value.tags)
+      dynamic "upgrade_settings" {
+        for_each = default_node_pool.value.max_surge != null ? ["upgrade_settings"] : []
+        content {
+          max_surge                     = default_node_pool.value.max_surge
+          node_soak_duration_in_minutes = default_node_pool.value.node_soak_duration_in_minutes
+          drain_timeout_in_minutes      = default_node_pool.value.drain_timeout_in_minutes
+        }
       }
     }
   }
-
   dynamic "microsoft_defender" {
     for_each = var.microsoft_defender_enabled ? ["microsoft_defender"] : []
-
     content {
       log_analytics_workspace_id = var.log_analytics_workspace_id
     }
   }
-
   dynamic "oms_agent" {
     for_each = var.oms_agent_enabled ? ["oms_agent"] : []
-
     content {
       log_analytics_workspace_id      = var.log_analytics_workspace_id
       msi_auth_for_monitoring_enabled = var.msi_auth_for_monitoring_enabled
     }
   }
-
   dynamic "service_mesh_profile" {
-    for_each = var.service_mesh_profile == null ? [] : ["service_mesh_profile"]
+    for_each = var.service_mesh_profile == null ? [] : [var.service_mesh_profile]
     content {
-      mode                             = var.service_mesh_profile.mode
-      external_ingress_gateway_enabled = var.service_mesh_profile.external_ingress_gateway_enabled
-      internal_ingress_gateway_enabled = var.service_mesh_profile.internal_ingress_gateway_enabled
+      mode      = service_mesh_profile.value.mode
+      revisions = lookup(service_mesh_profile.value, "revisions", [])
     }
   }
   dynamic "service_principal" {
     for_each = var.client_id != "" && var.client_secret != "" ? ["service_principal"] : []
-
     content {
       client_id     = var.client_id
       client_secret = var.client_secret
@@ -399,28 +317,23 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
   dynamic "storage_profile" {
     for_each = var.storage_profile_enabled ? ["storage_profile"] : []
-
     content {
       blob_driver_enabled         = var.storage_profile.blob_driver_enabled
       disk_driver_enabled         = var.storage_profile.disk_driver_enabled
-      disk_driver_version         = var.storage_profile.disk_driver_version
       file_driver_enabled         = var.storage_profile.file_driver_enabled
       snapshot_controller_enabled = var.storage_profile.snapshot_controller_enabled
     }
   }
-
   identity {
-    type = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? "UserAssigned" : "SystemAssigned"
+    type         = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? "UserAssigned" : "SystemAssigned"
+    identity_ids = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? [azurerm_user_assigned_identity.aks_user_assigned_identity[0].id] : []
   }
-
   dynamic "web_app_routing" {
     for_each = var.web_app_routing == null ? [] : ["web_app_routing"]
-
     content {
       dns_zone_ids = var.web_app_routing.dns_zone_ids
     }
   }
-
   dynamic "linux_profile" {
     for_each = var.linux_profile != null ? [true] : []
     iterator = lp
@@ -432,39 +345,21 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
     }
   }
-
   dynamic "workload_autoscaler_profile" {
     for_each = var.workload_autoscaler_profile == null ? [] : [var.workload_autoscaler_profile]
-
     content {
       keda_enabled                    = workload_autoscaler_profile.value.keda_enabled
       vertical_pod_autoscaler_enabled = workload_autoscaler_profile.value.vertical_pod_autoscaler_enabled
     }
   }
-
-
-  dynamic "http_proxy_config" {
-    for_each = var.http_proxy_config != null ? ["http_proxy_config"] : []
-
-    content {
-      http_proxy  = http_proxy_config.value.http_proxy
-      https_proxy = http_proxy_config.value.https_proxy
-      no_proxy    = http_proxy_config.value.no_proxy
-      trusted_ca  = http_proxy_config.value.trusted_ca
-    }
-  }
-
   dynamic "windows_profile" {
     for_each = var.windows_profile != null ? [var.windows_profile] : []
-
     content {
       admin_username = windows_profile.value.admin_username
       admin_password = windows_profile.value.admin_password
       license        = windows_profile.value.license
-
       dynamic "gmsa" {
         for_each = windows_profile.value.gmsa != null ? [windows_profile.value.gmsa] : []
-
         content {
           dns_server  = gmsa.value.dns_server
           root_domain = gmsa.value.root_domain
@@ -472,7 +367,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
     }
   }
-
   network_profile {
     network_plugin      = var.network_plugin
     network_policy      = var.network_policy
@@ -483,11 +377,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     network_plugin_mode = var.network_plugin_mode
     outbound_type       = var.outbound_type
     pod_cidr            = var.net_profile_pod_cidr
-
-
     dynamic "load_balancer_profile" {
       for_each = var.load_balancer_profile_enabled && var.load_balancer_sku == "standard" ? [1] : []
-
       content {
         idle_timeout_in_minutes     = var.load_balancer_profile_idle_timeout_in_minutes
         managed_outbound_ip_count   = var.load_balancer_profile_managed_outbound_ip_count
@@ -503,33 +394,49 @@ resource "azurerm_kubernetes_cluster" "aks" {
   ]
   tags = module.labels.tags
 }
-resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
-  count                         = var.enabled ? length(local.nodes_pools) : 0
-  kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks[0].id
-  name                          = local.nodes_pools[count.index].name
-  vm_size                       = local.nodes_pools[count.index].vm_size
-  os_type                       = local.nodes_pools[count.index].os_type
-  os_disk_type                  = local.nodes_pools[count.index].os_disk_type
-  os_disk_size_gb               = local.nodes_pools[count.index].os_disk_size_gb
-  vnet_subnet_id                = local.nodes_pools[count.index].vnet_subnet_id
-  enable_auto_scaling           = local.nodes_pools[count.index].enable_auto_scaling
-  enable_host_encryption        = local.nodes_pools[count.index].enable_host_encryption
-  node_count                    = local.nodes_pools[count.index].count
-  min_count                     = local.nodes_pools[count.index].min_count
-  max_count                     = local.nodes_pools[count.index].max_count
-  max_pods                      = local.nodes_pools[count.index].max_pods
-  enable_node_public_ip         = local.nodes_pools[count.index].enable_node_public_ip
-  mode                          = local.nodes_pools[count.index].mode
-  orchestrator_version          = local.nodes_pools[count.index].orchestrator_version
-  node_taints                   = local.nodes_pools[count.index].node_taints
-  host_group_id                 = local.nodes_pools[count.index].host_group_id
-  capacity_reservation_group_id = var.capacity_reservation_group_id
-  workload_runtime              = var.workload_runtime
-  zones                         = var.agents_availability_zones
 
+resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
+  for_each                      = var.enable ? var.node_pools : {}
+  kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks[0].id
+  name                          = each.key
+  vm_size                       = each.value.vm_size
+  os_type                       = each.value.os_type
+  os_disk_type                  = each.value.os_disk_type
+  os_disk_size_gb               = each.value.os_disk_size_gb
+  vnet_subnet_id                = each.value.vnet_subnet_id
+  auto_scaling_enabled          = each.value.enable_auto_scaling
+  host_encryption_enabled       = each.value.enable_host_encryption
+  node_count                    = each.value.enable_auto_scaling ? null : each.value.node_count
+  min_count                     = each.value.enable_auto_scaling ? each.value.min_count : null
+  max_count                     = each.value.enable_auto_scaling ? each.value.max_count : null
+  max_pods                      = each.value.max_pods
+  node_public_ip_enabled        = each.value.enable_node_public_ip
+  mode                          = each.value.mode
+  orchestrator_version          = each.value.orchestrator_version
+  node_taints                   = each.value.node_taints
+  host_group_id                 = each.value.host_group_id
+  capacity_reservation_group_id = each.value.capacity_reservation_group_id
+  workload_runtime              = each.value.workload_runtime
+  zones                         = each.value.zones
+  fips_enabled                  = each.value.fips_enabled
+  kubelet_disk_type             = each.value.kubelet_disk_type
+  node_labels                   = each.value.node_labels
+  pod_subnet_id                 = each.value.pod_subnet_id
+  proximity_placement_group_id  = each.value.proximity_placement_group_id
+  scale_down_mode               = each.value.scale_down_mode
+  snapshot_id                   = each.value.snapshot_id
+  spot_max_price                = each.value.spot_max_price
+  tags                          = each.value.tags
+  eviction_policy               = each.value.eviction_policy
+  gpu_instance                  = each.value.gpu_instance
+  gpu_driver                    = each.value.gpu_driver
+  node_public_ip_prefix_id      = each.value.node_public_ip_prefix_id
+  os_sku                        = each.value.os_sku
+  priority                      = each.value.priority
+  temporary_name_for_rotation   = each.value.temporary_name_for_rotation
+  ultra_ssd_enabled             = each.value.ultra_ssd_enabled
   dynamic "kubelet_config" {
     for_each = var.kubelet_config != null ? [var.kubelet_config] : []
-
     content {
       allowed_unsafe_sysctls    = kubelet_config.value.allowed_unsafe_sysctls
       container_log_max_line    = kubelet_config.value.container_log_max_line
@@ -543,18 +450,14 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
       topology_manager_policy   = kubelet_config.value.topology_manager_policy
     }
   }
-
   dynamic "linux_os_config" {
     for_each = var.agents_pool_linux_os_configs
-
     content {
-      swap_file_size_mb             = linux_os_config.value.swap_file_size_mb
-      transparent_huge_page_defrag  = linux_os_config.value.transparent_huge_page_defrag
-      transparent_huge_page_enabled = linux_os_config.value.transparent_huge_page_enabled
-
+      swap_file_size_mb            = linux_os_config.value.swap_file_size_mb
+      transparent_huge_page_defrag = linux_os_config.value.transparent_huge_page_defrag
+      transparent_huge_page        = linux_os_config.value.transparent_huge_page
       dynamic "sysctl_config" {
         for_each = linux_os_config.value.sysctl_configs == null ? [] : linux_os_config.value.sysctl_configs
-
         content {
           fs_aio_max_nr                      = sysctl_config.value.fs_aio_max_nr
           fs_file_max                        = sysctl_config.value.fs_file_max
@@ -590,111 +493,27 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
     }
   }
   dynamic "upgrade_settings" {
-    for_each = local.nodes_pools[count.index].max_surge == null ? [] : ["upgrade_settings"]
-
+    for_each = each.value.max_surge != null ? ["upgrade_settings"] : []
     content {
-      max_surge                     = local.nodes_pools[count.index].max_surge
-      node_soak_duration_in_minutes = local.nodes_pools[count.index].node_soak_duration_in_minutes
-      drain_timeout_in_minutes      = local.nodes_pools[count.index].drain_timeout_in_minutes
+      max_surge                     = each.value.max_surge
+      node_soak_duration_in_minutes = each.value.node_soak_duration_in_minutes
+      drain_timeout_in_minutes      = each.value.drain_timeout_in_minutes
     }
   }
-
   windows_profile {
     outbound_nat_enabled = var.outbound_nat_enabled
   }
 }
 
-resource "azurerm_role_assignment" "aks_entra_id" {
-  count                = var.enabled && var.role_based_access_control != null && try(var.role_based_access_control[0].azure_rbac_enabled, false) == true ? length(var.admin_group_id) : 0
-  scope                = azurerm_kubernetes_cluster.aks[0].id
-  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  principal_id         = var.admin_group_id[count.index]
-}
-
-# Allow aks system indentiy access to encrpty disc
-resource "azurerm_role_assignment" "aks_system_identity" {
-  count                = var.enabled && var.cmk_enabled ? 1 : 0
-  principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
-  scope                = azurerm_disk_encryption_set.main[0].id
-  role_definition_name = "Key Vault Crypto Service Encryption User"
-}
-
-# Allow aks system indentiy access to ACR
-resource "azurerm_role_assignment" "aks_acr_access_principal_id" {
-  count                = var.enabled && var.acr_enabled ? 1 : 0
-  principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
-  scope                = var.acr_id
-  role_definition_name = "AcrPull"
-}
-
-resource "azurerm_role_assignment" "aks_acr_access_object_id" {
-  count                = var.enabled && var.acr_enabled ? 1 : 0
-  principal_id         = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
-  scope                = var.acr_id
-  role_definition_name = "AcrPull"
-}
-
-# Allow user assigned identity to manage AKS items in MC_xxx RG
-resource "azurerm_role_assignment" "aks_user_assigned" {
-  count                = var.enabled ? 1 : 0
-  principal_id         = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
-  scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, azurerm_kubernetes_cluster.aks[0].node_resource_group)
-  role_definition_name = "Network Contributor"
-}
-
-resource "azurerm_user_assigned_identity" "aks_user_assigned_identity" {
-  count = var.enabled && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? 1 : 0
-
-  name                = format("%s-aks-mid", module.labels.id)
-  resource_group_name = local.resource_group_name
-  location            = local.location
-}
-
-resource "azurerm_role_assignment" "aks_uai_private_dns_zone_contributor" {
-  count = var.enabled && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? 1 : 0
-
-  scope                = var.private_dns_zone_id
-  role_definition_name = "Private DNS Zone Contributor"
-  principal_id         = azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id
-}
-
-resource "azurerm_role_assignment" "aks_uai_vnet_network_contributor" {
-  count                = var.enabled && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? 1 : 0
-  scope                = var.vnet_id
-  role_definition_name = "Network Contributor"
-  principal_id         = azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id
-}
-
-resource "azurerm_role_assignment" "key_vault_secrets_provider" {
-  count                = var.enabled && var.key_vault_secrets_provider_enabled ? 1 : 0
-  scope                = var.key_vault_id
-  role_definition_name = "Key Vault Administrator"
-  principal_id         = azurerm_kubernetes_cluster.aks[0].key_vault_secrets_provider[0].secret_identity[0].object_id
-}
-
-resource "azurerm_role_assignment" "rbac_keyvault_crypto_officer" {
-  for_each             = toset(var.enabled && var.cmk_enabled ? var.admin_objects_ids : [])
-  scope                = var.key_vault_id
-  role_definition_name = "Key Vault Crypto Officer"
-  principal_id         = each.value
-}
-
 resource "azurerm_key_vault_key" "example" {
   depends_on      = [azurerm_role_assignment.rbac_keyvault_crypto_officer]
-  count           = var.enabled && var.cmk_enabled ? 1 : 0
-  name            = format("%s-aks-encrypted-key", module.labels.id)
+  count           = var.enable && var.cmk_enabled ? 1 : 0
+  name            = var.resource_position_prefix ? format("aks-encrypted-key-%s", local.name) : format("%s-aks-encrypted-key", local.name)
   expiration_date = var.expiration_date
   key_vault_id    = var.key_vault_id
-  key_type        = "RSA"
-  key_size        = 2048
-  key_opts = [
-    "decrypt",
-    "encrypt",
-    "sign",
-    "unwrapKey",
-    "verify",
-    "wrapKey",
-  ]
+  key_type        = var.cmk_key_type
+  key_size        = var.cmk_key_size
+  key_opts        = var.cmk_key_ops
   dynamic "rotation_policy" {
     for_each = var.rotation_policy_enabled ? var.rotation_policy : {}
     content {
@@ -709,83 +528,61 @@ resource "azurerm_key_vault_key" "example" {
 }
 
 resource "azurerm_disk_encryption_set" "main" {
-  count               = var.enabled && var.cmk_enabled ? 1 : 0
-  name                = format("%s-aks-dsk-encrpted", module.labels.id)
-  resource_group_name = local.resource_group_name
-  location            = local.location
-  key_vault_key_id    = var.key_vault_id != "" ? azurerm_key_vault_key.example[0].id : null
-
+  count               = var.enable && var.cmk_enabled ? 1 : 0
+  name                = var.resource_position_prefix ? format("aks-dsk-encrpted-%s", local.name) : format("%s-aks-dsk-encrpted", local.name)
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  key_vault_key_id    = var.key_vault_id != null ? azurerm_key_vault_key.example[0].id : null
   identity {
     type = "SystemAssigned"
   }
 }
 
-resource "azurerm_role_assignment" "azurerm_disk_encryption_set_key_vault_access" {
-  count                = var.enabled && var.cmk_enabled ? 1 : 0
-  principal_id         = azurerm_disk_encryption_set.main[0].identity[0].principal_id
-  scope                = var.key_vault_id
-  role_definition_name = "Key Vault Crypto Service Encryption User"
-}
-
 resource "azurerm_key_vault_access_policy" "main" {
-  count = var.enabled && var.cmk_enabled ? 1 : 0
-
-  key_vault_id = var.key_vault_id
-
-  tenant_id = azurerm_disk_encryption_set.main[0].identity[0].tenant_id
-  object_id = azurerm_disk_encryption_set.main[0].identity[0].principal_id
-  key_permissions = [
-    "Get",
-    "WrapKey",
-    "UnwrapKey"
-  ]
-  certificate_permissions = [
-    "Get"
-  ]
+  count                   = var.enable && var.cmk_enabled ? 1 : 0
+  key_vault_id            = var.key_vault_id
+  tenant_id               = azurerm_disk_encryption_set.main[0].identity[0].tenant_id
+  object_id               = azurerm_disk_encryption_set.main[0].identity[0].principal_id
+  key_permissions         = var.cmk_des_key_permissions
+  certificate_permissions = var.cmk_des_certificate_permissions
 }
 
 resource "azurerm_key_vault_access_policy" "key_vault" {
-  count = var.enabled && var.cmk_enabled ? 1 : 0
-
+  count        = var.enable && var.cmk_enabled ? 1 : 0
   key_vault_id = var.key_vault_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = var.enable && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id : azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
 
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
-
-  key_permissions         = ["Get"]
-  certificate_permissions = ["Get"]
-  secret_permissions      = ["Get"]
+  key_permissions         = var.cmk_aks_key_permissions
+  certificate_permissions = var.cmk_aks_certificate_permissions
+  secret_permissions      = var.cmk_aks_secret_permissions
 }
 
 resource "azurerm_key_vault_access_policy" "kubelet_identity" {
-  count = var.enabled && var.cmk_enabled ? 1 : 0
-
+  count        = var.enable && var.cmk_enabled ? 1 : 0
   key_vault_id = var.key_vault_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
 
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
-
-  key_permissions         = ["Get"]
-  certificate_permissions = ["Get"]
-  secret_permissions      = ["Get"]
+  key_permissions         = var.cmk_kubelet_key_permissions
+  certificate_permissions = var.cmk_kubelet_certificate_permissions
+  secret_permissions      = var.cmk_kubelet_secret_permissions
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
   depends_on                     = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  name                           = format("%s-aks-diag-log", module.labels.id)
+  count                          = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
+  name                           = var.resource_position_prefix ? format("aks-diag-log-%s", local.name) : format("%s-aks-diag-log", local.name)
   target_resource_id             = azurerm_kubernetes_cluster.aks[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
   log_analytics_workspace_id     = var.log_analytics_workspace_id
   log_analytics_destination_type = var.log_analytics_destination_type
-
-  dynamic "metric" {
+  dynamic "enabled_metric" {
     for_each = var.metric_enabled ? ["AllMetrics"] : []
     content {
-      category = metric.value
-      enabled  = true
+      category = enabled_metric.value
     }
   }
   dynamic "enabled_log" {
@@ -800,33 +597,20 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
   }
 }
 
-data "azurerm_resources" "aks_pip" {
-  depends_on = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  type       = "Microsoft.Network/publicIPAddresses"
-  required_tags = {
-    Environment = var.environment
-    Name        = module.labels.id
-    Repository  = var.repository
-  }
-}
-
 resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
   depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  name                           = format("%s-aks-pip-diag-log", module.labels.id)
+  count                          = var.enable && var.diagnostic_setting_enable ? 1 : 0
+  name                           = var.resource_position_prefix ? format("aks-pip-diag-log-%s", local.name) : format("%s-aks-pip-diag-log", local.name)
   target_resource_id             = data.azurerm_resources.aks_pip[count.index].resources[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
   log_analytics_workspace_id     = var.log_analytics_workspace_id
   log_analytics_destination_type = var.log_analytics_destination_type
-
-  dynamic "metric" {
+  dynamic "enabled_metric" {
     for_each = var.metric_enabled ? ["AllMetrics"] : []
     content {
-      category = metric.value
-      enabled  = true
+      category = enabled_metric.value
     }
   }
   dynamic "enabled_log" {
@@ -836,34 +620,27 @@ resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
       category_group = var.pip_logs.category == null ? enabled_log.value : null
     }
   }
-
   lifecycle {
     ignore_changes = [log_analytics_destination_type]
   }
 }
 
-data "azurerm_resources" "aks_nsg" {
-  depends_on = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  type       = "Microsoft.Network/networkSecurityGroups"
-  required_tags = {
-    Environment = var.environment
-    Name        = module.labels.id
-    Repository  = var.repository
-  }
-}
-
 resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks]
-  count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  name                           = format("%s-aks-nsg-diag-log", module.labels.id)
+  count                          = var.enable && var.diagnostic_setting_enable ? 1 : 0
+  name                           = var.resource_position_prefix ? format("aks-nsg-diag-log-%s", local.name) : format("%s-aks-nsg-diag-log", local.name)
   target_resource_id             = data.azurerm_resources.aks_nsg[count.index].resources[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
   log_analytics_workspace_id     = var.log_analytics_workspace_id
   log_analytics_destination_type = var.log_analytics_destination_type
-
+  dynamic "enabled_metric" {
+    for_each = var.metric_enabled ? ["AllMetrics"] : []
+    content {
+      category = enabled_metric.value
+    }
+  }
   dynamic "enabled_log" {
     for_each = var.kv_logs.enabled ? var.kv_logs.category != null ? var.kv_logs.category : var.kv_logs.category_group : []
     content {
@@ -871,52 +648,31 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
       category_group = var.kv_logs.category == null ? enabled_log.value : null
     }
   }
-
   lifecycle {
     ignore_changes = [log_analytics_destination_type]
   }
 }
 
-data "azurerm_resources" "aks_nic" {
-  depends_on = [azurerm_kubernetes_cluster.aks]
-  count      = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  type       = "Microsoft.Network/networkInterfaces"
-  required_tags = {
-    Environment = var.environment
-    Name        = module.labels.id
-    Repository  = var.repository
-  }
-}
-
+##-----------------------------------------------------------------------------
+## AKS Cluster Diagnostic Settings
+##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  name                           = format("%s-aks-nic-dia-log", module.labels.id)
+  count                          = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
+  name                           = var.resource_position_prefix ? format("aks-nic-dia-log-%s", local.name) : format("%s-aks-nic-dia-log", local.name)
   target_resource_id             = data.azurerm_resources.aks_nic[count.index].resources[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
   log_analytics_workspace_id     = var.log_analytics_workspace_id
   log_analytics_destination_type = var.log_analytics_destination_type
-
-  dynamic "metric" {
+  dynamic "enabled_metric" {
     for_each = var.metric_enabled ? ["AllMetrics"] : []
     content {
-      category = metric.value
-      enabled  = true
+      category = enabled_metric.value
     }
   }
-
   lifecycle {
     ignore_changes = [log_analytics_destination_type]
   }
-}
-
-## AKS user authentication with Azure Rbac. 
-resource "azurerm_role_assignment" "example" {
-  for_each = var.enabled && var.aks_user_auth_role != null ? { for k in var.aks_user_auth_role : k.principal_id => k } : null
-  # scope                = 
-  scope                = each.value.scope
-  role_definition_name = each.value.role_definition_name
-  principal_id         = each.value.principal_id
 }

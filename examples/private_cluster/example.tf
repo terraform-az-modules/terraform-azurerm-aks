@@ -1,135 +1,165 @@
+##-----------------------------------------------------------------------------
+## Provider
+##-----------------------------------------------------------------------------
 provider "azurerm" {
   features {}
 }
+
 data "azurerm_client_config" "current_client_config" {}
 
+##-----------------------------------------------------------------------------
+## Resource Group
+##-----------------------------------------------------------------------------
 module "resource_group" {
-  source  = "clouddrove/resource-group/azure"
-  version = "1.0.2"
-
-  name        = "app"
-  environment = "test"
-  label_order = ["name", "environment", ]
-  location    = "Canada Central"
+  source      = "terraform-az-modules/resource-group/azure"
+  version     = "1.0.0"
+  name        = "core"
+  environment = "qa"
+  label_order = ["environment", "name", "location"]
+  location    = "canadacentral"
 }
 
+##-----------------------------------------------------------------------------
+## Vnet
+##-----------------------------------------------------------------------------
 module "vnet" {
-  source  = "clouddrove/vnet/azure"
-  version = "1.0.4"
-
-  name                = "app"
-  environment         = "test"
-  label_order         = ["name", "environment"]
+  source              = "terraform-az-modules/vnet/azure"
+  version             = "1.0.0"
+  name                = "core"
+  environment         = "qa"
+  label_order         = ["name", "environment", "location"]
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
-  address_spaces      = ["10.30.0.0/16"]
+  address_spaces      = ["10.0.0.0/16"]
 }
 
 module "subnet" {
-  source  = "clouddrove/subnet/azure"
-  version = "1.2.0"
-
-  name                 = "app"
-  environment          = "test"
-  label_order          = ["name", "environment"]
+  source               = "terraform-az-modules/subnet/azure"
+  version              = "1.0.0"
+  environment          = "dev"
+  label_order          = ["name", "environment", "location"]
   resource_group_name  = module.resource_group.resource_group_name
   location             = module.resource_group.resource_group_location
   virtual_network_name = module.vnet.vnet_name
-
-  #subnet
-  subnet_names    = ["default"]
-  subnet_prefixes = ["10.30.0.0/20"]
-
-  # route_table
-  routes = [
+  subnets = [
     {
-      name           = "rt-test"
-      address_prefix = "0.0.0.0/0"
-      next_hop_type  = "Internet"
+      name            = "subnet1"
+      subnet_prefixes = ["10.0.1.0/24"]
     }
   ]
 }
 
+# ------------------------------------------------------------------------------
+# Log Analytics
+# ------------------------------------------------------------------------------
 module "log-analytics" {
-  source                           = "clouddrove/log-analytics/azure"
-  version                          = "1.0.1"
-  name                             = "app"
-  environment                      = "test"
-  label_order                      = ["name", "environment"]
-  create_log_analytics_workspace   = true
-  log_analytics_workspace_sku      = "PerGB2018"
-  resource_group_name              = module.resource_group.resource_group_name
-  log_analytics_workspace_location = module.resource_group.resource_group_location
+  source                      = "terraform-az-modules/log-analytics/azure"
+  version                     = "1.0.0"
+  name                        = "core"
+  environment                 = "dev"
+  label_order                 = ["name", "environment", "location"]
+  log_analytics_workspace_sku = "PerGB2018"
+  resource_group_name         = module.resource_group.resource_group_name
+  location                    = module.resource_group.resource_group_location
+  log_analytics_workspace_id  = module.log-analytics.workspace_id
 }
 
+# ------------------------------------------------------------------------------
+# Key Vault
+# ------------------------------------------------------------------------------
 module "vault" {
-  source  = "clouddrove/key-vault/azure"
-  version = "1.1.0"
-  name    = "apptest5rds4556"
-  #environment         = local.environment
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
-  virtual_network_id  = module.vnet.vnet_id
-  subnet_id           = module.subnet.default_subnet_id[0]
-
+  source                        = "terraform-az-modules/key-vault/azure"
+  version                       = "1.0.0"
+  name                          = "core"
+  environment                   = "dev"
+  custom_name                   = "hhiuihjoi08"
+  label_order                   = ["name", "environment", "location"]
+  resource_group_name           = module.resource_group.resource_group_name
+  location                      = module.resource_group.resource_group_location
+  subnet_id                     = module.subnet.subnet_ids.subnet1
   public_network_access_enabled = true
-
+  sku_name                      = "premium"
+  private_dns_zone_ids          = module.private_dns_zone.private_dns_zone_ids.key_vault
   network_acls = {
     bypass         = "AzureServices"
     default_action = "Deny"
     ip_rules       = ["0.0.0.0/0"]
   }
+  reader_objects_ids = {
+    "Key Vault Administrator" = {
+      role_definition_name = "Key Vault Administrator"
+      principal_id         = data.azurerm_client_config.current_client_config.object_id
+    }
+  }
+  diagnostic_setting_enable  = true
+  log_analytics_workspace_id = module.log-analytics.workspace_id
+}
 
-  ##RBAC
-  enable_rbac_authorization = true
-  reader_objects_ids        = [data.azurerm_client_config.current_client_config.object_id]
-  admin_objects_ids         = [data.azurerm_client_config.current_client_config.object_id]
-  #### enable diagnostic setting
-  diagnostic_setting_enable  = false
-  log_analytics_workspace_id = module.log-analytics.workspace_id ## when diagnostic_setting_enable = true, need to add log analytics workspace id
+# ------------------------------------------------------------------------------
+# Private DNS Zone
+# ------------------------------------------------------------------------------
+module "private_dns_zone" {
+  source              = "terraform-az-modules/private-dns/azure"
+  version             = "1.0.0"
+  location            = module.resource_group.resource_group_location
+  name                = "dns"
+  environment         = "dev"
+  resource_group_name = module.resource_group.resource_group_name
+  label_order         = ["name", "environment", "location"]
+  private_dns_config = [
+    {
+      resource_type = "azure_kubernetes"
+      vnet_ids      = [module.vnet.vnet_id]
+    },
+    {
+      resource_type = "key_vault"
+      vnet_ids      = [module.vnet.vnet_id]
+    }
+  ]
 }
 
 module "aks" {
-  source      = "../.."
-  name        = "app"
-  environment = "test"
+  source                  = "../../"
+  name                    = "core"
+  environment             = "dev"
+  resource_group_name     = module.resource_group.resource_group_name
+  location                = module.resource_group.resource_group_location
+  private_dns_zone_id     = module.private_dns_zone.private_dns_zone_ids.azure_kubernetes
+  private_cluster_enabled = true
 
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
-
-  kubernetes_version = "1.27"
-  default_node_pool = {
-    name                  = "agentpool"
-    max_pods              = 200
-    os_disk_size_gb       = 64
-    vm_size               = "Standard_B2s"
-    count                 = 1
-    enable_node_public_ip = false
+  private_dns_zone_type = "Custom"
+  vnet_id               = module.vnet.vnet_id
+  kubernetes_version    = "1.30"
+  default_node_pool_config = {
+    name                          = "agentpool"
+    node_count                    = 1
+    vm_size                       = "Standard_D2_v3"
+    os_type                       = "Linux"
+    enable_auto_scaling           = false
+    enable_host_encryption        = false
+    min_count                     = null
+    max_count                     = null
+    type                          = "VirtualMachineScaleSets"
+    node_taints                   = null
+    vnet_subnet_id                = module.subnet.subnet_ids.subnet1
+    max_pods                      = 30
+    os_disk_type                  = "Managed"
+    os_disk_size_gb               = 128
+    host_group_id                 = null
+    orchestrator_version          = null
+    enable_node_public_ip         = false
+    mode                          = "System"
+    node_soak_duration_in_minutes = null
+    max_surge                     = null
+    drain_timeout_in_minutes      = null
+    zones                         = []
+    node_labels                   = {}
+    only_critical_addons_enabled  = true
   }
 
-
-  ##### if requred more than one node group.
-  nodes_pools = [
-    {
-      name                  = "nodegroup2"
-      max_pods              = 200
-      os_disk_size_gb       = 64
-      vm_size               = "Standard_B4ms"
-      count                 = 2
-      enable_node_public_ip = false
-      mode                  = "User"
-    },
-  ]
-
-  #networking
-  vnet_id         = module.vnet.vnet_id
-  nodes_subnet_id = module.subnet.default_subnet_id[0]
-  # acr_id       = module.container-registry.container_registry_id #pass this value if you  want aks to pull image from acr else remove it
-  key_vault_id      = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
-  admin_objects_ids = [data.azurerm_client_config.current_client_config.object_id]
-
-  #### enable diagnostic setting.
-  microsoft_defender_enabled = true
-  diagnostic_setting_enable  = true
-  log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
+  key_vault_id               = module.vault.id
+  admin_objects_ids          = [data.azurerm_client_config.current_client_config.object_id]
+  microsoft_defender_enabled = false
+  diagnostic_setting_enable  = false
+  log_analytics_workspace_id = module.log-analytics.workspace_id
 }

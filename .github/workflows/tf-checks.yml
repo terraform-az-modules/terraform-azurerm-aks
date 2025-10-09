@@ -5,14 +5,6 @@ on:
   pull_request:
   workflow_dispatch:
 jobs:
-  basic-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
-    with:
-      working_directory: './examples/basic/'
-  complete-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
-    with:
-      working_directory: './examples/complete/'    
   private_cluster-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
@@ -25,3 +17,9 @@ jobs:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/aks_with_microsoft_entra_id/'    
+
+  # TFLint Job
+  tf-lint:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-lint.yml@master
+    secrets:
+      GITHUB: ${{ secrets.GITHUB }}
