@@ -657,6 +657,7 @@ variable "log_analytics_destination_type" {
 }
 
 variable "diagnostic_setting_enable" {
+  description = "TODO: Add description for diagnostic_setting_enable"
   type    = bool
   default = false
 }
