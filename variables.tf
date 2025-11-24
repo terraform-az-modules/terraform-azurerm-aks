@@ -1065,6 +1065,7 @@ variable "expiration_date" {
 }
 
 variable "admin_objects_ids" {
+  description = "ID of the Admin Objects s"
   type    = list(string)
   default = null
 }
