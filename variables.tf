@@ -1007,6 +1007,7 @@ variable "pip_logs" {
 }
 
 variable "kv_logs" {
+  description = "Logging configuration for Kv s"
   type = object({
     enabled        = bool
     category       = optional(list(string))
