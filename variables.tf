@@ -1053,6 +1053,7 @@ variable "local_account_disabled" {
 }
 
 variable "admin_group_id" {
+  description = "ID of the Admin Group"
   type    = list(string)
   default = null
 
