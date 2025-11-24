@@ -1020,7 +1020,7 @@ variable "kv_logs" {
 }
 
 variable "rotation_policy" {
-  description = "Policy configuration for Rotation"
+  description = "Policy configuration for Rotation. Review and expand with specific policy attributes and constraints."
   type = map(object({
     time_before_expiry   = string
     expire_after         = string
