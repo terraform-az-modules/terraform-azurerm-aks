@@ -564,6 +564,7 @@ variable "key_vault_id" {
 }
 
 variable "role_based_access_control" {
+  description = "TODO: Add description for role_based_access_control"
   type = list(object({
     managed            = bool
     tenant_id          = optional(string)
