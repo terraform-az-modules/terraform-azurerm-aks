@@ -1024,7 +1024,7 @@ variable "rotation_policy" {
     time_before_expiry   = string
     expire_after         = string
     notify_before_expiry = string
-  description = "variable rotation_policy { type = map(object({ time_before_expiry = string expire_after = string notify_before_expiry = string })) default = {} description = Configures the rotation policy for secrets. Defines when and how secrets are rotated. Attributes: time_before_expiry: The amount of time be..."
+  description = "variable rotation_policy { type = map(object({ time_before_expiry = string expire_after = string notify_before_expiry = string })) default = {} description = Configures the rotation policy for the managed cluster. Attributes: - time_before_expiry: Specifies the time before expiry. - expire_after: Specifies the expiry duration. - notify_before_expiry: Specifies the notification duration before expiry. }"
   }))
   default = {
     example_rotation_policy = {
