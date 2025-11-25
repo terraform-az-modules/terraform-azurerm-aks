@@ -564,15 +564,10 @@ variable "key_vault_id" {
 }
 
 variable "role_based_access_control" {
-  description = "The `role_based_access_control` variable is a list of objects that define role-based access control settings for Azure resources. Each object in the list specifies the configuration for managing access and permissions. The value is an object with the following attributes:
-
-- `managed`: Indicates whether the role-based access control is managed by the module. Set to `true` to enable management, or `false` to disable it. For example, use `true` to allow the module to handle role assignments automatically.
-
-- `tenant_id`: (Optional) Specifies the Azure Active Directory tenant ID. This is required if you are using a different tenant than the default one associated with your subscription. For example, use `"12345678-1234-1234-1234-123456789abc"` to specify a particular tenant.
-
-- `azure_rbac_enabled`: Determines if Azure Role-Based Access Control (RBAC) is enabled for the resources. Set to `true` to enable Azure RBAC, which allows for fine-grained access management using Azure roles.
-
-**Note**: Ensure that `tenant_id` is provided when using a non-default Azure AD tenant. Misconfiguration of RBAC settings can lead to unauthorized access or lack of access to essential resources."
+  description = "Configures role-based access control settings for Azure resources.  
+- `managed`: Indicates if the role is managed by the module.  
+- `tenant_id`: (Optional) Specifies the tenant ID for the role.  
+- `azure_rbac_enabled`: Determines if Azure RBAC is enabled."
   type = list(object({
     managed            = bool
     tenant_id          = optional(string)
