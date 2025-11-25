@@ -28,3 +28,8 @@ output "key_vault_secrets_provider" {
   description = "Specifies the obejct id of key vault secrets provider "
 }
 
+output "aks_kube_config" {
+  description = "The config of the resource"
+  value       = azurerm_kubernetes_cluster.aks_kube.config
+}
+
