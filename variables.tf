@@ -1065,9 +1065,9 @@ variable "expiration_date" {
 }
 
 variable "admin_objects_ids" {
-  description = "admin_objects_ids" is a list of strings representing the IDs of administrative objects. Use this variable to specify the identifiers for objects that require administrative access or configuration."
-  type    = list(string)
-  default = null
+  description = "ID of the Admin Objects s"
+  type        = list(string)
+  default     = null
 }
 
 variable "api_server_access_profile" {
