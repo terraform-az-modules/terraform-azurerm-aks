@@ -657,7 +657,7 @@ variable "log_analytics_destination_type" {
 }
 
 variable "diagnostic_setting_enable" {
-  description = "Enables or disables the diagnostic settings for the resources. Set to `true` to enable diagnostic settings, or `false` to disable them."
+  description = "Enables or disables the diagnostic setting. Set to `true` to enable diagnostic logging for Azure resources, or `false` to disable it."
   type    = bool
   default = false
 }
