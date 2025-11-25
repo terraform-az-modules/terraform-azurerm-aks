@@ -1053,9 +1053,9 @@ variable "local_account_disabled" {
 }
 
 variable "admin_group_id" {
-  description = "List of admin group IDs for access control. Use this to specify the IDs of groups that should have administrative privileges."
-  type    = list(string)
-  default = null
+  description = "ID of the Admin Group"
+  type        = list(string)
+  default     = null
 
 }
 
