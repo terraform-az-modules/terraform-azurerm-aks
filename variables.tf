@@ -998,6 +998,7 @@ variable "pip_logs" {
     enabled        = bool
     category       = optional(list(string))
     category_group = optional(list(string))
+  description = "Configures the diagnostic settings for PIP logs. * enabled: Whether to enable PIP logs. * category: A list of PIP log categories to enable. * category_group: A list of PIP log category groups to enable."
   })
 
   default = {
