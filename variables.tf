@@ -565,6 +565,7 @@ variable "key_vault_id" {
 
 variable "role_based_access_control" {
   type = list(object({
+    description        = "Role-based access control configuration"
     managed            = bool
     tenant_id          = optional(string)
     azure_rbac_enabled = bool
