@@ -564,13 +564,15 @@ variable "key_vault_id" {
 }
 
 variable "role_based_access_control" {
-  description = "Defines role-based access control (RBAC) settings for the Azure Kubernetes Service (AKS) cluster. The `role_based_access_control` variable is a list of objects, each specifying RBAC configurations with the following attributes:
+  description = "The `role_based_access_control` variable is a list of objects that define role-based access control settings for Azure resources. Each object in the list specifies the configuration for managing access and permissions. The value is an object with the following attributes:
 
-- `role_name`: Specifies the name of the role to be assigned. For example, "Contributor" or "Reader".
-- `principal_id`: The unique identifier of the Azure AD principal (user, group, or service principal) to which the role is assigned. This should be a valid GUID.
-- `scope`: Defines the scope at which the role assignment applies. This can be a specific resource group or subscription level. For example, "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}".
+- `managed`: Indicates whether the role-based access control is managed by the module. Set to `true` to enable management, or `false` to disable it. For example, use `true` to allow the module to handle role assignments automatically.
 
-**Note**: Ensure that the `principal_id` corresponds to an existing Azure AD entity, and the `scope` is correctly formatted to avoid assignment errors. Role assignments may take some time to propagate in Azure."
+- `tenant_id`: (Optional) Specifies the Azure Active Directory tenant ID. This is required if you are using a different tenant than the default one associated with your subscription. For example, use `"12345678-1234-1234-1234-123456789abc"` to specify a particular tenant.
+
+- `azure_rbac_enabled`: Determines if Azure Role-Based Access Control (RBAC) is enabled for the resources. Set to `true` to enable Azure RBAC, which allows for fine-grained access management using Azure roles.
+
+**Note**: Ensure that `tenant_id` is provided when using a non-default Azure AD tenant. Misconfiguration of RBAC settings can lead to unauthorized access or lack of access to essential resources."
   type = list(object({
     managed            = bool
     tenant_id          = optional(string)
