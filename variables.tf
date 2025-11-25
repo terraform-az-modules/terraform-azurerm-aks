@@ -1065,7 +1065,14 @@ variable "expiration_date" {
 }
 
 variable "admin_objects_ids" {
-  description = "ID of the Admin Objects s"
+  description = "A list of string identifiers representing the unique IDs of administrative objects within the Azure environment. These IDs are typically associated with resources that require administrative access or management, such as user accounts, service principals, or other entities that play a critical role in the governance of the Azure infrastructure. 
+
+Attributes:
+- Each entry in the list should be a valid string that corresponds to an existing administrative object within the Azure Active Directory or other relevant Azure services.
+
+Notes:
+- Ensure that the provided IDs are accurate and correspond to the intended administrative objects, as incorrect IDs may lead to permission issues or resource management failures. 
+- There are no default values for this variable, and it is recommended to populate this list based on the specific administrative requirements of your Azure deployment."
   type    = list(string)
   default = null
 }
