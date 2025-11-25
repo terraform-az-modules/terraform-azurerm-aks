@@ -568,7 +568,7 @@ variable "role_based_access_control" {
     managed            = bool
     tenant_id          = optional(string)
     azure_rbac_enabled = bool
-    description        = "Configures role-based access control (RBAC) settings for the Azure Kubernetes Service (AKS) cluster. * managed: Specifies whether Azure manages the RBAC. * tenant_id: (Optional) The Tenant ID which should be used for authentication. * azure_rbac_enabled: Specifies whether Azure RBAC is enabled for Kubernetes authorization."
+  description = "Configures role-based access control (RBAC) settings for the Azure Kubernetes Service (AKS) cluster. * managed: Specifies whether Azure manages the RBAC. * tenant_id: (Optional) The Tenant ID which should be used for authentication. * azure_rbac_enabled: Specifies whether Azure RBAC is enabled for Kubernetes authorization."
   }))
   default = null
 }
