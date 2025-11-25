@@ -1001,6 +1001,7 @@ variable "pip_logs" {
   })
 
   default = {
+    description    = "Logging configuration for Pip s"
     enabled        = true
     category_group = ["AllLogs"]
   }
