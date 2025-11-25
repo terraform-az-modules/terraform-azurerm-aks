@@ -1014,6 +1014,7 @@ variable "kv_logs" {
   })
 
   default = {
+    description    = "Logging configuration for Kv s"
     enabled        = true
     category_group = ["AllLogs"]
   }
