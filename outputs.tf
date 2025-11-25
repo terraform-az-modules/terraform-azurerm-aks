@@ -28,3 +28,8 @@ output "key_vault_secrets_provider" {
   description = "Specifies the obejct id of key vault secrets provider "
 }
 
+output "aks_identitys" {
+  description = "Map of managed identity configuration"
+  value       = { for k, v in azurerm_kubernetes_cluster.aks : k => v.identity }
+}
+
