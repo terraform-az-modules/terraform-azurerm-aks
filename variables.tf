@@ -564,7 +564,17 @@ variable "key_vault_id" {
 }
 
 variable "role_based_access_control" {
-  description = "Role-based access control configuration"
+  description = "Role-based access control (RBAC) is a critical component for managing permissions and access to resources within Azure Kubernetes Service (AKS). This variable defines a list of access control rules that dictate the permissions granted to users or groups interacting with the AKS cluster. Each rule is represented as an object containing specific attributes that detail the role assignments and the scope of access.
+
+Attributes:
+- role: Specifies the role to be assigned (e.g., "admin", "reader", "contributor").
+- principal_id: The unique identifier of the user or group to whom the role is assigned.
+- scope: Defines the level at which the role is applied, such as a specific resource group or the entire AKS cluster.
+
+Notes:
+- Ensure that the roles and principal IDs correspond to existing Azure Active Directory users or groups.
+- The scope must align with the resources available within the Azure subscription to avoid permission errors.
+- Default values may not be applicable, as this variable typically requires explicit definitions for each role assignment."
   type = list(object({
     managed            = bool
     tenant_id          = optional(string)
