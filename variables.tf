@@ -569,7 +569,8 @@ variable "role_based_access_control" {
     tenant_id          = optional(string)
     azure_rbac_enabled = bool
   }))
-  default = null
+  default     = null
+  description = "Role-based access control configuration"
 }
 
 variable "kubelet_config" {
