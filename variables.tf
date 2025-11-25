@@ -994,10 +994,10 @@ variable "metric_enabled" {
 }
 
 variable "pip_logs" {
-  description = "Configures the logging settings for a PIP.  
+  description = "Configures the logging settings for the PIP.  
 - `enabled`: Boolean to enable or disable logging.  
-- `category`: Optional list of specific log categories.  
-- `category_group`: Optional list of log category groups."
+- `category`: Optional list of logging categories.  
+- `category_group`: Optional list of logging category groups."
   type = object({
     enabled        = bool
     category       = optional(list(string))
