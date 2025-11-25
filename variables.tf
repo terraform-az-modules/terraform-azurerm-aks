@@ -1067,6 +1067,7 @@ variable "expiration_date" {
 variable "admin_objects_ids" {
   type    = list(string)
   default = null
+  description = "admin_objects_ids: A list of Azure Active Directory object IDs that should be granted administrator privileges on the AKS cluster. These IDs can represent users, groups, or service principals."
 }
 
 variable "api_server_access_profile" {
