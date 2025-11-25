@@ -995,6 +995,7 @@ variable "metric_enabled" {
 
 variable "pip_logs" {
   type = object({
+    description    = "Logging configuration for Pip s"
     enabled        = bool
     category       = optional(list(string))
     category_group = optional(list(string))
