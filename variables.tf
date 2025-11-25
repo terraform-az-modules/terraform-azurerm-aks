@@ -565,9 +565,9 @@ variable "key_vault_id" {
 
 variable "role_based_access_control" {
   description = "Configures role-based access control settings for Azure resources.  
-- `managed`: Indicates if the role is managed by the module.  
-- `tenant_id`: (Optional) Specifies the tenant ID for the role.  
-- `azure_rbac_enabled`: Determines if Azure RBAC is enabled."
+- `managed`: Indicates if the role is managed by the module (boolean).  
+- `tenant_id`: Optional. Specifies the tenant ID for the role (string).  
+- `azure_rbac_enabled`: Determines if Azure RBAC is enabled (boolean)."
   type = list(object({
     managed            = bool
     tenant_id          = optional(string)
