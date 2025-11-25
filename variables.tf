@@ -1020,7 +1020,17 @@ variable "kv_logs" {
 }
 
 variable "rotation_policy" {
-  description = "Policy configuration for Rotation. Review and expand with specific policy attributes and constraints."
+  description = "The rotation_policy variable defines a set of policies for managing the rotation of secrets or credentials within the Azure environment. This is particularly useful for enhancing security by ensuring that sensitive information is regularly updated and managed according to specified guidelines.
+
+Attributes:
+- frequency: Specifies how often the rotation should occur (e.g., daily, weekly, monthly).
+- duration: Defines the time period for which the rotated secrets remain valid before requiring another rotation.
+- notification: Indicates whether notifications should be sent out upon rotation events, allowing for better tracking and management.
+
+Notes:
+- Ensure that the frequency and duration values align with organizational security policies.
+- The notification attribute can be set to true or false, depending on whether alerts are desired.
+- Default values for these attributes may be defined based on best practices or organizational standards."
   type = map(object({
     time_before_expiry   = string
     expire_after         = string
