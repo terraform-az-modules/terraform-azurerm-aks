@@ -657,8 +657,9 @@ variable "log_analytics_destination_type" {
 }
 
 variable "diagnostic_setting_enable" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
+  description = "Flag to enable/disable Diagnostic Setting"
 }
 
 variable "cmk_enabled" {
