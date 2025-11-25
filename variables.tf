@@ -994,17 +994,10 @@ variable "metric_enabled" {
 }
 
 variable "pip_logs" {
-  description = "The `pip_logs` variable is designed to manage logging configurations for the deployment of resources within the Azure environment. It allows users to specify detailed logging settings that can be utilized for monitoring and troubleshooting purposes.
-
-Attributes:
-- `enabled` (bool): Indicates whether logging is enabled. Default value is `true`, meaning logging is active unless explicitly set to `false`.
-- `log_level` (string): Specifies the level of logging detail. Common values include `info`, `warn`, `error`, and `debug`.
-- `log_format` (string): Defines the format of the logs, such as `json` or `text`, to facilitate easier parsing and analysis.
-- `retention_days` (number): Sets the number of days to retain logs before they are automatically deleted. 
-
-Notes:
-- Ensure that logging configurations comply with Azure's logging and monitoring best practices to avoid excessive costs or performance issues.
-- Default values for attributes may vary based on organizational policies or specific application requirements."
+  description = "Configures the logging settings for a PIP.  
+- `enabled`: Boolean to enable or disable logging.  
+- `category`: Optional list of specific log categories.  
+- `category_group`: Optional list of log category groups."
   type = object({
     enabled        = bool
     category       = optional(list(string))
