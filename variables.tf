@@ -1007,10 +1007,7 @@ variable "pip_logs" {
 }
 
 variable "kv_logs" {
-  description = "Configures logging settings for Azure Key Vault.  
-- `enabled`: Boolean to enable or disable logging.  
-- `category`: Optional list of specific log categories to include.  
-- `category_group`: Optional list of log category groups to include."
+  description = "Logging configuration for Kv s"
   type = object({
     enabled        = bool
     category       = optional(list(string))
