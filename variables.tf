@@ -1020,10 +1020,7 @@ variable "kv_logs" {
 }
 
 variable "rotation_policy" {
-  description = "Configures the rotation policy for resources.  
-- `time_before_expiry`: Duration before the resource expires.  
-- `expire_after`: Time period after which the resource expires.  
-- `notify_before_expiry`: Time period to notify before the resource expires."
+  description = "Policy configuration for Rotation. Review and expand with specific policy attributes and constraints."
   type = map(object({
     time_before_expiry   = string
     expire_after         = string
