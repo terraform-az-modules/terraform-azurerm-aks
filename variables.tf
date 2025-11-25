@@ -1055,6 +1055,7 @@ variable "local_account_disabled" {
 variable "admin_group_id" {
   type    = list(string)
   default = null
+  description = "List of Azure Active Directory group IDs that should be granted cluster administrator privileges."
 
 }
 
