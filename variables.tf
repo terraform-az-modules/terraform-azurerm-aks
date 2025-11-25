@@ -657,7 +657,11 @@ variable "log_analytics_destination_type" {
 }
 
 variable "diagnostic_setting_enable" {
-  description = "Flag to enable/disable Diagnostic Setting"
+  description = "Enables or disables the diagnostic settings for the Azure resources managed by the module. Setting this variable to true activates the diagnostic settings, allowing for the collection and storage of logs and metrics, which can be essential for monitoring and troubleshooting. Conversely, setting it to false will prevent the module from configuring any diagnostic settings, which may limit visibility into resource performance and health.
+
+Notes:
+- The default value is set to true, ensuring that diagnostic settings are enabled unless explicitly disabled.
+- It is recommended to keep diagnostic settings enabled in production environments to facilitate effective monitoring and management of resources."
   type    = bool
   default = false
 }
