@@ -657,7 +657,7 @@ variable "log_analytics_destination_type" {
 }
 
 variable "diagnostic_setting_enable" {
-  description = "Determines whether diagnostic settings are enabled for Azure resources. Set to `true` to activate diagnostic logging and monitoring, which can be crucial for compliance and operational insights in Azure environments. For example, enabling this setting allows you to capture logs and metrics for resources such as Azure Kubernetes Service (AKS) clusters, enhancing visibility and troubleshooting capabilities."
+  description = "Indicates whether diagnostic settings are enabled for Azure resources. This boolean variable controls the activation of diagnostic logs and metrics, which are crucial for monitoring and troubleshooting Azure services. Set to `true` to enable diagnostic settings, allowing you to capture and analyze logs and metrics for resources such as Azure Kubernetes Service (AKS) clusters, virtual machines, and more. Set to `false` to disable these settings, which may limit visibility into resource performance and issues."
   type    = bool
   default = false
 }
