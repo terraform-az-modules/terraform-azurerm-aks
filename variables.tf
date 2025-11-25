@@ -1011,7 +1011,7 @@ variable "kv_logs" {
     enabled        = bool
     category       = optional(list(string))
     category_group = optional(list(string))
-  description = "# kv_logs configures diagnostic settings for Key Vault. # Attributes: # - enabled: Enable or disable diagnostic logs for Key Vault. # - category: (Optional) List of log categories to enable. # - category_group: (Optional) List of log category groups to enable."
+  description = "# kv_logs configures diagnostic settings for Key Vault. # - enabled: Enable or disable diagnostic settings. # - category: List of diagnostic log categories to enable. # - category_group: List of diagnostic log category groups to enable."
   })
 
   default = {
