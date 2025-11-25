@@ -1053,14 +1053,7 @@ variable "local_account_disabled" {
 }
 
 variable "admin_group_id" {
-  description = "The `admin_group_id` variable is designed to hold a list of string values representing the unique identifiers of Azure Active Directory (AAD) groups that are granted administrative access to the Kubernetes cluster. This allows for fine-grained control over permissions and ensures that only designated groups can manage the cluster resources.
-
-- Each entry in the list should be a valid AAD group ID.
-- The list can contain multiple group IDs to accommodate various administrative roles and responsibilities.
-
-Notes:
-- Ensure that the specified group IDs exist in your Azure Active Directory.
-- The maximum number of entries in the list may be subject to Azure's limitations on role assignments."
+  description = "List of admin group IDs for access control. Use this to specify the IDs of groups that should have administrative privileges."
   type    = list(string)
   default = null
 
