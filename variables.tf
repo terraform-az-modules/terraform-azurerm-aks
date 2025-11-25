@@ -657,9 +657,9 @@ variable "log_analytics_destination_type" {
 }
 
 variable "diagnostic_setting_enable" {
-  description = "Enables or disables the diagnostic setting. Set to `true` to enable diagnostic logging for Azure resources, or `false` to disable it."
-  type    = bool
-  default = false
+  description = "Flag to enable/disable Diagnostic Setting"
+  type        = bool
+  default     = false
 }
 
 variable "cmk_enabled" {
