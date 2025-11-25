@@ -28,3 +28,8 @@ output "key_vault_secrets_provider" {
   description = "Specifies the obejct id of key vault secrets provider "
 }
 
+output "aks_fqdns" {
+  description = "Map of fully qualified domain name"
+  value       = { for k, v in azurerm_kubernetes_cluster.aks : k => v.fqdn }
+}
+
