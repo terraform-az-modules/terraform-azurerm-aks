@@ -94,7 +94,7 @@ module "vault" {
   version                       = "1.0.1"
   name                          = "core"
   environment                   = "dev"
-  custom_name = "kdkd03kde"
+  custom_name                   = "kdkd03kde"
   label_order                   = ["name", "environment", "location"]
   resource_group_name           = module.resource_group.resource_group_name
   location                      = module.resource_group.resource_group_location
@@ -155,7 +155,7 @@ module "aks" {
   role_based_access_control = [{
     managed            = true
     tenant_id          = "b****" # Required when azure_rbac_enabled = true
-    azure_rbac_enabled = true                                   # Use Azure RBAC for Kubernetes authorization
+    azure_rbac_enabled = true    # Use Azure RBAC for Kubernetes authorization
   }]
 
   # Azure RBAC role assignments for namespace-level access
