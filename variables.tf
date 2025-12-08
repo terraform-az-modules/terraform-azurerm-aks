@@ -219,7 +219,6 @@ variable "private_dns_zone_id" {
 variable "api_server_access_profile" {
   type = object({
     authorized_ip_ranges     = optional(list(string))
-    vnet_integration_enabled = optional(bool)
     subnet_id                = optional(string)
   })
   default     = null

@@ -185,7 +185,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.api_server_access_profile != null ? [var.api_server_access_profile] : []
     content {
       authorized_ip_ranges     = api_server_access_profile.value.authorized_ip_ranges
-      vnet_integration_enabled = api_server_access_profile.value.vnet_integration_enabled
       subnet_id                = api_server_access_profile.value.subnet_id
     }
   }
