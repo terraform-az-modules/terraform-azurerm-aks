@@ -150,18 +150,18 @@ module "aks" {
   }
   # Microsoft Entra ID integration with Azure RBAC
   local_account_disabled = true
-  admin_group_id         = ["***ed"]
+  admin_group_id         = ["<YOUR_ADMIN_GROUP_ID>"]
 
   role_based_access_control = [{
     managed            = true
-    tenant_id          = "b****" # Required when azure_rbac_enabled = true
-    azure_rbac_enabled = true    # Use Azure RBAC for Kubernetes authorization
+    tenant_id          = "<YOUR_TENANT_ID>" # Required when azure_rbac_enabled = true
+    azure_rbac_enabled = true               # Use Azure RBAC for Kubernetes authorization
   }]
 
-  # Azure RBAC role assignments for namespace-level access
-  # aks_user_auth_role = [{
-  #   scope                = "/subscriptions/0**5e1cabc60c/resourceGroups/public-app-test-resource-group/providers/Microsoft.ContainerService/managedClusters/app1-test-aks1/namespaces/test"
-  #   role_definition_name = "Azure Kubernetes Service RBAC Admin"
-  #   principal_id         = "***-**-***-**-***" # User or group object ID
-  # }]
+  #Azure RBAC role assignments for namespace-level access
+  aks_user_auth_role = [{
+    scope                = "/subscriptions/0**5e1cabc60c/resourceGroups/public-app-test-resource-group/providers/Microsoft.ContainerService/managedClusters/app1-test-aks1/namespaces/test"
+    role_definition_name = "Azure Kubernetes Service RBAC Admin"
+    principal_id         = "***-**-***-**-***" # User or group object ID
+  }]
 }

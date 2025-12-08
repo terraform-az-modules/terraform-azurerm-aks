@@ -82,6 +82,10 @@ module "private_dns_zone" {
     {
       resource_type = "key_vault"
       vnet_ids      = [module.vnet.vnet_id]
+    },
+    {
+      resource_type = "azure_kubernetes"
+      vnet_ids      = [module.vnet.vnet_id]
     }
   ]
 }

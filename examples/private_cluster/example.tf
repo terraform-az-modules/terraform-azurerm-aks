@@ -148,7 +148,6 @@ module "aks" {
     os_disk_size_gb              = 30
     enable_node_public_ip        = false
     mode                         = "System"
-    only_critical_addons_enabled = true
   }
   key_vault_id               = module.vault.id
   admin_objects_ids          = [data.azurerm_client_config.current_client_config.object_id]

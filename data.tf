@@ -5,7 +5,7 @@ data "azurerm_resources" "aks_nic" {
 }
 
 data "azurerm_resources" "aks_nsg" {
-  depends_on = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  depends_on = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
   count      = var.enable && var.diagnostic_setting_enable ? 1 : 0
   type       = "Microsoft.Network/networkSecurityGroups"
 }

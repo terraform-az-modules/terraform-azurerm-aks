@@ -62,7 +62,9 @@ resource "azurerm_role_assignment" "key_vault_secrets_provider" {
 }
 
 resource "azurerm_role_assignment" "rbac_keyvault_crypto_officer" {
-  for_each             = toset(var.enable && var.cmk_enabled ? var.admin_objects_ids : [])
+  for_each = var.enable && var.cmk_enabled && var.admin_objects_ids != null ? {
+    for idx, id in var.admin_objects_ids : idx => id
+  } : {}
   scope                = var.key_vault_id
   role_definition_name = "Key Vault Crypto Officer"
   principal_id         = each.value
