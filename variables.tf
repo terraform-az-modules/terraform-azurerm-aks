@@ -93,32 +93,8 @@ variable "resource_group_name" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.27.7"
+  default     = "1.31"
   description = "Version of Kubernetes to deploy"
-}
-
-variable "aci_connector_linux_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable Virtual Node pool"
-}
-
-variable "aci_connector_linux_subnet_name" {
-  type        = string
-  default     = null
-  description = "aci_connector_linux subnet name"
-}
-
-variable "aks_sku_tier" {
-  type        = string
-  default     = "Free"
-  description = "AKS SKU tier. Possible values are Free or Paid"
-}
-
-variable "private_cluster_enabled" {
-  type        = bool
-  default     = true
-  description = "Configure AKS as a Private Cluster"
 }
 
 variable "node_resource_group" {
@@ -127,36 +103,70 @@ variable "node_resource_group" {
   description = "Name of the resource group in which to put AKS nodes. If null default to MC_<AKS RG Name>"
 }
 
-variable "private_dns_zone_type" {
-  type        = string
-  default     = "System"
-  description = <<EOD
-Set AKS private dns zone if needed and if private cluster is enabled (privatelink.<region>.azmk8s.io)
-- "Custom": Bring your own Private DNS Zone and pass its id via `private_dns_zone_id`.
-- "System": AKS manages the zone in the Node Resource Group.
-- "None": Bring your own DNS server/resolution.
-EOD
-}
-
-variable "private_dns_zone_id" {
+variable "edge_zone" {
   type        = string
   default     = null
-  description = "Id of the private DNS Zone when <private_dns_zone_type> is Custom"
+  description = "Edge Zone for the AKS cluster."
 }
 
-variable "linux_profile" {
-  description = "Username and ssh key for accessing AKS Linux nodes with ssh."
-  type = object({
-    username = string,
-    ssh_key  = string
-  })
-  default = null
+##-----------------------------------------------------------------------------
+## Cluster Configuration
+##-----------------------------------------------------------------------------
+variable "aks_sku_tier" {
+  type        = string
+  default     = "Standard"
+  description = "AKS SKU tier. Possible values are Free or Paid"
+}
+
+variable "automatic_channel_upgrade" {
+  type        = string
+  default     = null
+  description = "Auto-upgrade channel: `patch`, `rapid`, `node-image`, `stable`."
+}
+
+variable "local_account_disabled" {
+  type        = bool
+  default     = false
+  description = "Disable local account?"
+}
+
+##-----------------------------------------------------------------------------
+## Network Configuration
+##-----------------------------------------------------------------------------
+variable "network_plugin" {
+  type        = string
+  default     = "azure"
+  description = "Network plugin for networking."
+}
+
+variable "network_policy" {
+  type        = string
+  default     = "azure"
+  description = "Network policy to be used with Azure CNI (`calico` or `azure`)."
+}
+
+variable "network_plugin_mode" {
+  type        = string
+  default     = null
+  description = "Network plugin mode (e.g., `Overlay`)."
+}
+
+variable "network_data_plane" {
+  type        = string
+  default     = null
+  description = "eBPF data plane (e.g., `cilium`)."
 }
 
 variable "service_cidr" {
   type        = string
   default     = "10.2.0.0/16"
   description = "CIDR used by kubernetes services."
+}
+
+variable "net_profile_pod_cidr" {
+  type        = string
+  default     = null
+  description = "Pod CIDR (kubenet only)."
 }
 
 variable "outbound_type" {
@@ -171,165 +181,54 @@ variable "vnet_id" {
   description = "VNet id that AKS MSI should be Network Contributor on (private cluster)."
 }
 
-variable "azure_policy_enabled" {
+variable "outbound_nat_enabled" {
   type        = bool
   default     = true
-  description = "Enable Azure Policy Addon."
+  description = "Windows nodes outbound NAT enabled."
 }
 
-variable "microsoft_defender_enabled" {
+##-----------------------------------------------------------------------------
+## Private Cluster Configuration
+##-----------------------------------------------------------------------------
+variable "private_cluster_enabled" {
   type        = bool
   default     = false
-  description = "Enable Microsoft Defender add-on."
+  description = "Configure AKS as a Private Cluster"
 }
 
-variable "oms_agent_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable Log Analytics (OMS agent) add-on."
+variable "private_dns_zone_type" {
+  type        = string
+  default     = "Custom"
+  description = <<EOD
+Set AKS private dns zone if needed and if private cluster is enabled (privatelink.<region>.azmk8s.io)
+- "Custom": Bring your own Private DNS Zone and pass its id via `private_dns_zone_id`.
+- "System": AKS manages the zone in the Node Resource Group.
+- "None": Bring your own DNS server/resolution.
+EOD
 }
 
-variable "service_mesh_profile" {
+variable "private_dns_zone_id" {
+  type        = string
+  default     = null
+  description = "Id of the private DNS Zone when <private_dns_zone_type> is Custom"
+}
+
+##-----------------------------------------------------------------------------
+## API Server Access Configuration
+##-----------------------------------------------------------------------------
+variable "api_server_access_profile" {
   type = object({
-    mode                             = string
-    internal_ingress_gateway_enabled = optional(bool, true)
-    external_ingress_gateway_enabled = optional(bool, true)
+    authorized_ip_ranges     = optional(list(string))
+    vnet_integration_enabled = optional(bool)
+    subnet_id                = optional(string)
   })
   default     = null
-  description = "Istio service mesh configuration."
+  description = "Control public/private API server exposure"
 }
 
-variable "client_id" {
-  type        = string
-  default     = ""
-  description = "Service Principal Client ID"
-  nullable    = false
-}
-
-variable "client_secret" {
-  type        = string
-  default     = ""
-  description = "Service Principal Client Secret"
-  nullable    = false
-}
-
-variable "storage_profile_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable storage profile"
-  nullable    = false
-}
-
-variable "storage_profile" {
-  type = object({
-    enabled                     = bool
-    blob_driver_enabled         = bool
-    disk_driver_enabled         = bool
-    disk_driver_version         = string
-    file_driver_enabled         = bool
-    snapshot_controller_enabled = bool
-  })
-  default = {
-    enabled                     = false
-    blob_driver_enabled         = false
-    disk_driver_enabled         = true
-    disk_driver_version         = "v1"
-    file_driver_enabled         = true
-    snapshot_controller_enabled = true
-  }
-  description = "Storage profile configuration"
-}
-
-variable "web_app_routing" {
-  type = object({
-    dns_zone_ids = list(string)
-  })
-  default     = null
-  description = "Web App Routing configuration (DNS Zone IDs)."
-}
-
-variable "log_analytics_workspace_id" {
-  type        = string
-  default     = null
-  description = "The ID of Log Analytics workspace"
-}
-
-variable "msi_auth_for_monitoring_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable managed identity auth for monitoring?"
-}
-
-variable "network_plugin" {
-  type        = string
-  default     = "azure"
-  description = "Network plugin for networking."
-}
-
-variable "network_policy" {
-  type        = string
-  default     = "azure"
-  description = "Network policy to be used with Azure CNI (`calico` or `azure`)."
-}
-
-variable "acr_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable ACR access for AKS"
-}
-
-variable "acr_id" {
-  type        = string
-  default     = null
-  description = "ACR resource ID to grant access to AKS"
-}
-
-variable "auto_scaler_profile_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable configuring the cluster autoscaler profile"
-  nullable    = false
-}
-
-variable "key_vault_id" {
-  type        = string
-  default     = null
-  description = "Key Vault (or Key URL) used for Disk Encryption Set, etc."
-}
-
-variable "role_based_access_control" {
-  type = list(object({
-    managed            = bool
-    tenant_id          = optional(string)
-    azure_rbac_enabled = bool
-  }))
-  default = null
-}
-
-variable "kubelet_config" {
-  type = object({
-    allowed_unsafe_sysctls    = optional(list(string))
-    container_log_max_line    = optional(number)
-    container_log_max_size_mb = optional(string)
-    cpu_cfs_quota_enabled     = optional(bool)
-    cpu_cfs_quota_period      = optional(string)
-    cpu_manager_policy        = optional(string)
-    image_gc_high_threshold   = optional(number)
-    image_gc_low_threshold    = optional(number)
-    pod_max_pid               = optional(number)
-    topology_manager_policy   = optional(string)
-  })
-  default     = null
-  description = "Kubelet configuration options."
-}
-
-variable "load_balancer_profile_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable a load_balancer_profile block (requires `standard` SKU)."
-  nullable    = false
-}
-
+##-----------------------------------------------------------------------------
+## Load Balancer Configuration
+##-----------------------------------------------------------------------------
 variable "load_balancer_sku" {
   type        = string
   default     = "standard"
@@ -340,257 +239,11 @@ variable "load_balancer_sku" {
   }
 }
 
-variable "network_plugin_mode" {
-  type        = string
-  default     = null
-  description = "Network plugin mode (e.g., `Overlay`)."
-}
-
-variable "net_profile_pod_cidr" {
-  type        = string
-  default     = null
-  description = "Pod CIDR (kubenet only)."
-}
-
-variable "network_data_plane" {
-  type        = string
-  default     = null
-  description = "eBPF data plane (e.g., `cilium`)."
-}
-
-# Diagnosis Settings Enable
-variable "storage_account_id" {
-  type        = string
-  default     = null
-  description = "Destination Storage Account ID for Diagnostic Settings."
-}
-
-variable "eventhub_name" {
-  type        = string
-  default     = null
-  description = "Destination Event Hub name for Diagnostic Settings."
-}
-
-variable "eventhub_authorization_rule_id" {
-  type        = string
-  default     = null
-  description = "Event Hub auth rule ID for Diagnostic Settings."
-}
-
-variable "log_analytics_destination_type" {
-  type        = string
-  default     = "AzureDiagnostics"
-  description = "AzureDiagnostics or Dedicated (LA tables)."
-}
-
-variable "diagnostic_setting_enable" {
-  type    = bool
-  default = false
-}
-
-variable "cmk_enabled" {
-  type        = bool
-  default     = true
-  description = "Flag to control resource creation related to CMK encryption."
-}
-
-variable "windows_profile" {
-  type = object({
-    admin_username = string
-    admin_password = optional(string)
-    license        = optional(string)
-    gmsa = optional(object({
-      dns_server  = string
-      root_domain = string
-    }))
-  })
-  default     = null
-  description = "Windows profile configuration"
-}
-
-variable "workload_autoscaler_profile" {
-  type = object({
-    keda_enabled                    = optional(bool, false)
-    vertical_pod_autoscaler_enabled = optional(bool, false)
-  })
-  default     = null
-  description = "Workload autoscaler profile (KEDA/VPA)."
-}
-
-variable "http_proxy_config" {
-  type = object({
-    http_proxy  = optional(string)
-    https_proxy = optional(string)
-    no_proxy    = optional(list(string))
-    trusted_ca  = optional(string)
-  })
-  default     = null
-  description = "HTTP Proxy configuration"
-}
-
-variable "maintenance_window_node_os" {
-  type = object({
-    day_of_month = optional(number)
-    day_of_week  = optional(string)
-    duration     = number
-    frequency    = string
-    interval     = number
-    start_date   = optional(string)
-    start_time   = optional(string)
-    utc_offset   = optional(string)
-    week_index   = optional(string)
-    not_allowed = optional(set(object({
-      end   = string
-      start = string
-    })))
-  })
-  default     = null
-  description = "Maintenance window for node OS."
-}
-
-variable "maintenance_window_auto_upgrade" {
-  type = object({
-    frequency    = string
-    interval     = number
-    duration     = number
-    day_of_week  = optional(string)
-    day_of_month = optional(number)
-    week_index   = optional(string)
-    start_time   = optional(string)
-    utc_offset   = optional(string)
-    start_date   = optional(string)
-    not_allowed = optional(list(object({
-      start = string
-      end   = string
-    })))
-  })
-  default     = null
-  description = "Maintenance window for auto-upgrades."
-}
-
-variable "node_public_ip_tags" {
-  type        = map(string)
-  default     = {}
-  description = "Tags for node public IPs."
-}
-
-variable "agents_pool_kubelet_configs" {
-  type = list(object({
-    cpu_manager_policy        = optional(string)
-    cpu_cfs_quota_enabled     = optional(bool, true)
-    cpu_cfs_quota_period      = optional(string)
-    image_gc_high_threshold   = optional(number)
-    image_gc_low_threshold    = optional(number)
-    topology_manager_policy   = optional(string)
-    allowed_unsafe_sysctls    = optional(set(string))
-    container_log_max_size_mb = optional(number)
-    container_log_max_line    = optional(number)
-    pod_max_pid               = optional(number)
-  }))
-  default     = []
-  description = "Per-pool kubelet configs (advanced)."
-}
-
-variable "kubelet_identity" {
-  type = object({
-    client_id                 = optional(string)
-    object_id                 = optional(string)
-    user_assigned_identity_id = optional(string)
-  })
-  default     = null
-  description = "User-assigned identity for Kubelets (optional)."
-}
-
-variable "outbound_nat_enabled" {
-  type        = bool
-  default     = true
-  description = "Windows nodes outbound NAT enabled."
-}
-
-variable "kms_enabled" {
+variable "load_balancer_profile_enabled" {
   type        = bool
   default     = false
-  description = "Enable Azure KeyVault Key Management Service."
-}
-
-variable "kms_key_vault_key_id" {
-  type        = string
-  default     = null
-  description = "Identifier of Azure Key Vault key (required if KMS enabled)."
-}
-
-variable "key_vault_secrets_provider_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable Secrets Store CSI Driver (AKV provider)."
+  description = "Enable a load_balancer_profile block (requires `standard` SKU)."
   nullable    = false
-}
-
-variable "secret_rotation_interval" {
-  type        = string
-  default     = "2m"
-  description = "Secret rotation poll interval (used when rotation enabled)."
-  nullable    = false
-}
-
-variable "secret_rotation_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable secret rotation (requires AKV CSI)."
-  nullable    = false
-}
-
-variable "kms_key_vault_network_access" {
-  type        = string
-  default     = "Public"
-  description = "Key Vault network access: `Private` or `Public`."
-  validation {
-    condition     = contains(["Private", "Public"], var.kms_key_vault_network_access)
-    error_message = "Possible values are `Private` and `Public`"
-  }
-}
-
-variable "ingress_application_gateway" {
-  type = list(object({
-    gateway_id   = optional(string)
-    gateway_name = optional(string)
-    subnet_cidr  = optional(string)
-    subnet_id    = optional(list(string))
-  }))
-  default     = null
-  description = "AGIC configuration."
-}
-
-variable "image_cleaner_interval_hours" {
-  type        = number
-  default     = 48
-  description = "Interval (hours) for image cleanup."
-}
-
-variable "image_cleaner_enabled" {
-  type        = bool
-  default     = false
-  description = "Enable Image Cleaner."
-}
-
-variable "enable_http_proxy" {
-  type        = bool
-  default     = false
-  description = "Enable HTTP proxy configuration."
-}
-
-variable "edge_zone" {
-  type        = string
-  default     = null
-  description = "Edge Zone for the AKS cluster."
-}
-
-variable "confidential_computing" {
-  type = object({
-    sgx_quote_helper_enabled = bool
-  })
-  default     = null
-  description = "Enable Confidential Computing (SGX)."
 }
 
 variable "load_balancer_profile_idle_timeout_in_minutes" {
@@ -629,151 +282,8 @@ variable "load_balancer_profile_outbound_ports_allocated" {
   description = "SNAT ports per VM (0–64000)."
 }
 
-variable "auto_scaler_profile" {
-  type = object({
-    balance_similar_node_groups      = bool
-    empty_bulk_delete_max            = number
-    expander                         = string
-    max_graceful_termination_sec     = string
-    max_node_provisioning_time       = string
-    max_unready_nodes                = number
-    max_unready_percentage           = number
-    new_pod_scale_up_delay           = string
-    scale_down_delay_after_add       = string
-    scale_down_delay_after_delete    = string
-    scale_down_delay_after_failure   = string
-    scale_down_unneeded              = string
-    scale_down_unready               = string
-    scale_down_utilization_threshold = string
-    scan_interval                    = string
-    skip_nodes_with_local_storage    = bool
-    skip_nodes_with_system_pods      = bool
-  })
-  default = {
-    balance_similar_node_groups      = false
-    empty_bulk_delete_max            = 10
-    expander                         = "random"
-    max_graceful_termination_sec     = "600"
-    max_node_provisioning_time       = "15m"
-    max_unready_nodes                = 3
-    max_unready_percentage           = 45
-    new_pod_scale_up_delay           = "10s"
-    scale_down_delay_after_add       = "10m"
-    scale_down_delay_after_delete    = null
-    scale_down_delay_after_failure   = "3m"
-    scale_down_unneeded              = "10m"
-    scale_down_unready               = "20m"
-    scale_down_utilization_threshold = "0.5"
-    scan_interval                    = "10s"
-    skip_nodes_with_local_storage    = true
-    skip_nodes_with_system_pods      = true
-  }
-  description = "Cluster autoscaler profile configuration"
-}
-
-variable "automatic_channel_upgrade" {
-  type        = string
-  default     = null
-  description = "Auto-upgrade channel: `patch`, `rapid`, `node-image`, `stable`."
-}
-
-variable "metric_enabled" {
-  type        = bool
-  default     = true
-  description = "Diagnostic Metric enabled?"
-}
-
-variable "pip_logs" {
-  type = object({
-    enabled        = bool
-    category       = optional(list(string))
-    category_group = optional(list(string))
-  })
-  default = {
-    enabled        = true
-    category_group = ["AllLogs"]
-  }
-}
-
-variable "kv_logs" {
-  type = object({
-    enabled        = bool
-    category       = optional(list(string))
-    category_group = optional(list(string))
-  })
-  default = {
-    enabled        = true
-    category_group = ["AllLogs"]
-  }
-}
-
-variable "rotation_policy" {
-  type = map(object({
-    time_before_expiry   = string
-    expire_after         = string
-    notify_before_expiry = string
-  }))
-  default = {
-    example_rotation_policy = {
-      time_before_expiry   = "P30D"
-      expire_after         = "P90D"
-      notify_before_expiry = "P29D"
-    }
-  }
-}
-
-variable "rotation_policy_enabled" {
-  type        = bool
-  default     = true
-  description = "Whether or not to enable rotation policy"
-}
-
-variable "role_based_access_control_enabled" {
-  type        = bool
-  default     = true
-  description = "Enable RBAC?"
-}
-
-variable "local_account_disabled" {
-  type        = bool
-  default     = false
-  description = "Disable local account?"
-}
-
-variable "admin_group_id" {
-  type    = list(string)
-  default = null
-}
-
-variable "expiration_date" {
-  type        = string
-  default     = "2026-09-17T23:59:59Z"
-  description = "Expiration UTC datetime (Y-m-d'T'H:M:S'Z')"
-}
-
-variable "admin_objects_ids" {
-  type    = list(string)
-  default = null
-}
-
-variable "api_server_access_profile" {
-  type = object({
-    authorized_ip_ranges     = optional(list(string))
-    vnet_integration_enabled = optional(bool)
-    subnet_id                = optional(string)
-  })
-  default     = null
-  description = "Control public/private API server exposure"
-}
-
-variable "aks_user_auth_role" {
-  type        = any
-  default     = []
-  description = "Group/User role-based access to AKS"
-}
-
 ##-----------------------------------------------------------------------------
-## Node pool configs (kept as objects; do not remove fields here)
+## Default Node Pool Configuration
 ##-----------------------------------------------------------------------------
 variable "default_node_pool_config" {
   description = "Configuration for the default system node pool"
@@ -805,35 +315,29 @@ variable "default_node_pool_config" {
     pod_subnet_id                = optional(string, null)
     tags                         = optional(map(string), null)
   })
-  # default = {
-  #   name                         = "agentpool"
-  #   node_count                   = 1
-  #   vm_size                      = "Standard_D2_v3"
-  #   enable_auto_scaling          = false
-  #   enable_host_encryption       = true
-  #   min_count                    = null
-  #   max_count                    = null
-  #   type                         = "VirtualMachineScaleSets"
-  #   max_pods                     = 30
-  #   os_disk_type                 = "Managed"
-  #   os_disk_size_gb              = 128
-  #   os_sku                       = "Ubuntu"
-  #   orchestrator_version         = null
-  #   enable_node_public_ip        = false
-  #   zones                        = ["1", "2", "3"]
-  #   node_labels                  = {}
-  #   only_critical_addons_enabled = true
-  #   fips_enabled                 = false
-  #   proximity_placement_group_id = null
-  #   scale_down_mode              = "Delete"
-  #   snapshot_id                  = null
-  #   temporary_name_for_rotation  = null
-  #   ultra_ssd_enabled            = false
-  #   pod_subnet_id                = null
-  #   tags                         = {}
-  # }
 }
 
+variable "agents_pool_max_surge" {
+  type        = string
+  default     = "10%"
+  description = "The maximum number or percentage of nodes which will be added to the Default Node Pool size during an upgrade."
+}
+
+variable "agents_pool_node_soak_duration_in_minutes" {
+  type        = number
+  default     = 0
+  description = "(Optional) The amount of time in minutes to wait after draining a node and before reimaging and moving on to next node. Defaults to 0."
+}
+
+variable "agents_pool_drain_timeout_in_minutes" {
+  type        = number
+  default     = null
+  description = "(Optional) The amount of time in minutes to wait on eviction of pods and graceful termination per node. This eviction wait time honors waiting on pod disruption budgets. If this time is exceeded, the upgrade fails. Unsetting this after configuring it will force a new resource to be created."
+}
+
+##-----------------------------------------------------------------------------
+## Additional Node Pools Configuration
+##-----------------------------------------------------------------------------
 variable "node_pools" {
   description = "Map of additional node pools"
   type = map(object({
@@ -846,22 +350,18 @@ variable "node_pools" {
     enable_host_encryption        = optional(bool, null)
     eviction_policy               = optional(string, null)
     gpu_instance                  = optional(string)
-    gpu_driver                    = optional(string)
-    node_public_ip_prefix_id      = optional(string, null)
     os_sku                        = optional(string, null)
     priority                      = optional(string, null)
-    temporary_name_for_rotation   = optional(string, null)
     node_count                    = optional(number, null)
     min_count                     = optional(number, null)
     max_count                     = optional(number, null)
-    max_pods                      = optional(number, null)
+    max_pods                      = optional(number, 50)
     enable_node_public_ip         = optional(bool, null)
     mode                          = optional(string, null)
     orchestrator_version          = optional(string, null)
     node_taints                   = optional(list(string), null)
     host_group_id                 = optional(string, null)
     zones                         = optional(list(string), null)
-    max_surge                     = optional(string, null)
     node_soak_duration_in_minutes = optional(number, null)
     drain_timeout_in_minutes      = optional(number, null)
     capacity_reservation_group_id = optional(string, null)
@@ -871,6 +371,7 @@ variable "node_pools" {
     node_labels                   = optional(map(string), null)
     pod_subnet_id                 = optional(string, null)
     proximity_placement_group_id  = optional(string, null)
+    temporary_name_for_rotation   = optional(string, null)
     scale_down_mode               = optional(string, null)
     snapshot_id                   = optional(string, null)
     spot_max_price                = optional(number, null)
@@ -880,13 +381,47 @@ variable "node_pools" {
   default = {}
 }
 
-variable "user_aks_roles" {
-  description = "Map of role definitions to their respective admin group IDs"
-  type = map(object({
-    role_definition = string
-    principal_ids   = list(string)
+variable "node_public_ip_tags" {
+  type        = map(string)
+  default     = {}
+  description = "Tags for node public IPs."
+}
+
+##-----------------------------------------------------------------------------
+## Node Pool Advanced Configuration
+##-----------------------------------------------------------------------------
+variable "kubelet_config" {
+  type = object({
+    allowed_unsafe_sysctls    = optional(list(string))
+    container_log_max_line    = optional(number)
+    container_log_max_size_mb = optional(string)
+    cpu_cfs_quota_enabled     = optional(bool)
+    cpu_cfs_quota_period      = optional(string)
+    cpu_manager_policy        = optional(string)
+    image_gc_high_threshold   = optional(number)
+    image_gc_low_threshold    = optional(number)
+    pod_max_pid               = optional(number)
+    topology_manager_policy   = optional(string)
+  })
+  default     = null
+  description = "Kubelet configuration options."
+}
+
+variable "agents_pool_kubelet_configs" {
+  type = list(object({
+    cpu_manager_policy        = optional(string)
+    cpu_cfs_quota_enabled     = optional(bool, true)
+    cpu_cfs_quota_period      = optional(string)
+    image_gc_high_threshold   = optional(number)
+    image_gc_low_threshold    = optional(number)
+    topology_manager_policy   = optional(string)
+    allowed_unsafe_sysctls    = optional(set(string))
+    container_log_max_size_mb = optional(number)
+    container_log_max_line    = optional(number)
+    pod_max_pid               = optional(number)
   }))
-  default = null
+  default     = []
+  description = "Per-pool kubelet configs (advanced)."
 }
 
 variable "agents_pool_linux_os_configs" {
@@ -968,6 +503,519 @@ EOT
   nullable    = false
 }
 
+##-----------------------------------------------------------------------------
+## Auto Scaler Configuration
+##-----------------------------------------------------------------------------
+variable "auto_scaler_profile_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable configuring the cluster autoscaler profile"
+  nullable    = false
+}
+
+variable "auto_scaler_profile" {
+  type = object({
+    balance_similar_node_groups      = bool
+    empty_bulk_delete_max            = number
+    expander                         = string
+    max_graceful_termination_sec     = string
+    max_node_provisioning_time       = string
+    max_unready_nodes                = number
+    max_unready_percentage           = number
+    new_pod_scale_up_delay           = string
+    scale_down_delay_after_add       = string
+    scale_down_delay_after_delete    = string
+    scale_down_delay_after_failure   = string
+    scale_down_unneeded              = string
+    scale_down_unready               = string
+    scale_down_utilization_threshold = string
+    scan_interval                    = string
+    skip_nodes_with_local_storage    = bool
+    skip_nodes_with_system_pods      = bool
+  })
+  default = {
+    balance_similar_node_groups      = false
+    empty_bulk_delete_max            = 10
+    expander                         = "random"
+    max_graceful_termination_sec     = "600"
+    max_node_provisioning_time       = "15m"
+    max_unready_nodes                = 3
+    max_unready_percentage           = 45
+    new_pod_scale_up_delay           = "10s"
+    scale_down_delay_after_add       = "10m"
+    scale_down_delay_after_delete    = null
+    scale_down_delay_after_failure   = "3m"
+    scale_down_unneeded              = "10m"
+    scale_down_unready               = "20m"
+    scale_down_utilization_threshold = "0.5"
+    scan_interval                    = "10s"
+    skip_nodes_with_local_storage    = true
+    skip_nodes_with_system_pods      = true
+  }
+  description = "Cluster autoscaler profile configuration"
+}
+
+variable "workload_autoscaler_profile" {
+  type = object({
+    keda_enabled                    = optional(bool, false)
+    vertical_pod_autoscaler_enabled = optional(bool, false)
+  })
+  default     = null
+  description = "Workload autoscaler profile (KEDA/VPA)."
+}
+
+##-----------------------------------------------------------------------------
+## Linux Profile Configuration
+##-----------------------------------------------------------------------------
+variable "linux_profile" {
+  description = "Username and ssh key for accessing AKS Linux nodes with ssh."
+  type = object({
+    username = string,
+    ssh_key  = string
+  })
+  default = null
+}
+
+##-----------------------------------------------------------------------------
+## Windows Profile Configuration
+##-----------------------------------------------------------------------------
+variable "windows_profile" {
+  type = object({
+    admin_username = string
+    admin_password = optional(string)
+    license        = optional(string)
+    gmsa = optional(object({
+      dns_server  = string
+      root_domain = string
+    }))
+  })
+  default     = null
+  description = "Windows profile configuration"
+}
+
+##-----------------------------------------------------------------------------
+## Identity Configuration
+##-----------------------------------------------------------------------------
+variable "kubelet_identity" {
+  type = object({
+    client_id                 = optional(string)
+    object_id                 = optional(string)
+    user_assigned_identity_id = optional(string)
+  })
+  default     = null
+  description = "User-assigned identity for Kubelets (optional)."
+}
+
+variable "client_id" {
+  type        = string
+  default     = ""
+  description = "Service Principal Client ID"
+  nullable    = false
+}
+
+variable "client_secret" {
+  type        = string
+  default     = ""
+  description = "Service Principal Client Secret"
+  nullable    = false
+}
+
+##-----------------------------------------------------------------------------
+## RBAC and Access Control
+##-----------------------------------------------------------------------------
+variable "role_based_access_control_enabled" {
+  type        = bool
+  default     = true
+  description = "Enable Role-Based Access Control (RBAC) for the AKS cluster"
+}
+
+variable "role_based_access_control" {
+  type = list(object({
+    managed            = bool
+    tenant_id          = optional(string)
+    azure_rbac_enabled = bool
+  }))
+  default     = null
+  description = "RBAC configuration block specifying managed AAD integration, tenant ID, and Azure RBAC enablement"
+}
+
+variable "admin_group_id" {
+  type        = list(string)
+  default     = null
+  description = "List of Azure AD group object IDs that will have admin access to the AKS cluster"
+}
+
+variable "admin_objects_ids" {
+  type        = list(string)
+  default     = null
+  description = "List of Azure AD object IDs (users or service principals) that will have admin access to the AKS cluster"
+}
+
+variable "user_aks_roles" {
+  description = "Map of role definitions to their respective admin group IDs"
+  type = map(object({
+    role_definition = string
+    principal_ids   = list(string)
+  }))
+  default = null
+}
+
+variable "aks_user_auth_role" {
+  type        = any
+  default     = []
+  description = "Group/User role-based access to AKS"
+}
+
+##-----------------------------------------------------------------------------
+## ACR Integration
+##-----------------------------------------------------------------------------
+variable "acr_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable ACR access for AKS"
+}
+
+variable "acr_id" {
+  type        = string
+  default     = null
+  description = "ACR resource ID to grant access to AKS"
+}
+
+##-----------------------------------------------------------------------------
+## Add-ons Configuration
+##-----------------------------------------------------------------------------
+variable "azure_policy_enabled" {
+  type        = bool
+  default     = true
+  description = "Enable Azure Policy Addon."
+}
+
+variable "microsoft_defender_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Microsoft Defender add-on."
+}
+
+variable "oms_agent_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Log Analytics (OMS agent) add-on."
+}
+
+variable "aci_connector_linux_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Virtual Node pool"
+}
+
+variable "aci_connector_linux_subnet_name" {
+  type        = string
+  default     = null
+  description = "aci_connector_linux subnet name"
+}
+
+##-----------------------------------------------------------------------------
+## Service Mesh Configuration
+##-----------------------------------------------------------------------------
+variable "service_mesh_profile" {
+  type = object({
+    mode                             = string
+    internal_ingress_gateway_enabled = optional(bool, true)
+    external_ingress_gateway_enabled = optional(bool, true)
+  })
+  default     = null
+  description = "Istio service mesh configuration."
+}
+
+variable "web_app_routing" {
+  type = object({
+    dns_zone_ids = list(string)
+  })
+  default     = null
+  description = "Web App Routing configuration (DNS Zone IDs)."
+}
+
+##-----------------------------------------------------------------------------
+## Storage Configuration
+##-----------------------------------------------------------------------------
+variable "storage_profile_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable storage profile"
+  nullable    = false
+}
+
+variable "storage_profile" {
+  type = object({
+    enabled                     = bool
+    blob_driver_enabled         = bool
+    disk_driver_enabled         = bool
+    disk_driver_version         = string
+    file_driver_enabled         = bool
+    snapshot_controller_enabled = bool
+  })
+  default = {
+    enabled                     = false
+    blob_driver_enabled         = false
+    disk_driver_enabled         = true
+    disk_driver_version         = "v1"
+    file_driver_enabled         = true
+    snapshot_controller_enabled = true
+  }
+  description = "Storage profile configuration"
+}
+
+##-----------------------------------------------------------------------------
+## Monitoring and Logging
+##-----------------------------------------------------------------------------
+variable "log_analytics_workspace_id" {
+  type        = string
+  default     = null
+  description = "The ID of Log Analytics workspace"
+}
+
+variable "msi_auth_for_monitoring_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable managed identity auth for monitoring?"
+}
+
+variable "log_analytics_destination_type" {
+  type        = string
+  default     = "AzureDiagnostics"
+  description = "AzureDiagnostics or Dedicated (LA tables)."
+}
+
+variable "diagnostic_setting_enable" {
+  type        = bool
+  description = "Enable or disable diagnostic settings for this resource"
+  default     = false
+}
+
+variable "storage_account_id" {
+  type        = string
+  default     = null
+  description = "Destination Storage Account ID for Diagnostic Settings."
+}
+
+variable "eventhub_name" {
+  type        = string
+  default     = null
+  description = "Destination Event Hub name for Diagnostic Settings."
+}
+
+variable "eventhub_authorization_rule_id" {
+  type        = string
+  default     = null
+  description = "Event Hub auth rule ID for Diagnostic Settings."
+}
+
+variable "metric_enabled" {
+  type        = bool
+  default     = true
+  description = "Diagnostic Metric enabled?"
+}
+
+variable "pip_logs" {
+  type = object({
+    enabled        = bool
+    category       = optional(list(string))
+    category_group = optional(list(string))
+  })
+  description = "Configuration for Public IP diagnostic log settings. Specify log categories or category groups to collect"
+  default = {
+    enabled        = true
+    category_group = ["AllLogs"]
+  }
+}
+
+variable "kv_logs" {
+  type = object({
+    enabled        = bool
+    category       = optional(list(string))
+    category_group = optional(list(string))
+  })
+  description = "Configuration for Key Vault diagnostic log settings. Specify log categories or category groups to collect"
+  default = {
+    enabled        = true
+    category_group = ["AllLogs"]
+  }
+}
+
+##-----------------------------------------------------------------------------
+## Image Cleaner Configuration
+##-----------------------------------------------------------------------------
+variable "image_cleaner_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Image Cleaner."
+}
+
+variable "image_cleaner_interval_hours" {
+  type        = number
+  default     = 48
+  description = "Interval (hours) for image cleanup."
+}
+
+##-----------------------------------------------------------------------------
+## HTTP Proxy Configuration
+##-----------------------------------------------------------------------------
+variable "enable_http_proxy" {
+  type        = bool
+  default     = false
+  description = "Enable HTTP proxy configuration."
+}
+
+variable "http_proxy_config" {
+  type = object({
+    http_proxy  = optional(string)
+    https_proxy = optional(string)
+    no_proxy    = optional(list(string))
+    trusted_ca  = optional(string)
+  })
+  default     = null
+  description = "HTTP Proxy configuration"
+}
+
+##-----------------------------------------------------------------------------
+## Maintenance Windows
+##-----------------------------------------------------------------------------
+variable "maintenance_window_node_os" {
+  type = object({
+    day_of_month = optional(number)
+    day_of_week  = optional(string)
+    duration     = number
+    frequency    = string
+    interval     = number
+    start_date   = optional(string)
+    start_time   = optional(string)
+    utc_offset   = optional(string)
+    week_index   = optional(string)
+    not_allowed = optional(set(object({
+      end   = string
+      start = string
+    })))
+  })
+  default     = null
+  description = "Maintenance window for node OS."
+}
+
+variable "maintenance_window_auto_upgrade" {
+  type = object({
+    frequency    = string
+    interval     = number
+    duration     = number
+    day_of_week  = optional(string)
+    day_of_month = optional(number)
+    week_index   = optional(string)
+    start_time   = optional(string)
+    utc_offset   = optional(string)
+    start_date   = optional(string)
+    not_allowed = optional(list(object({
+      start = string
+      end   = string
+    })))
+  })
+  default     = null
+  description = "Maintenance window for auto-upgrades."
+}
+
+##-----------------------------------------------------------------------------
+## Confidential Computing
+##-----------------------------------------------------------------------------
+variable "confidential_computing" {
+  type = object({
+    sgx_quote_helper_enabled = bool
+  })
+  default     = null
+  description = "Enable Confidential Computing (SGX)."
+}
+
+##-----------------------------------------------------------------------------
+## Key Vault Integration
+##-----------------------------------------------------------------------------
+variable "key_vault_id" {
+  type        = string
+  default     = null
+  description = "Key Vault (or Key URL) used for Disk Encryption Set, etc."
+}
+
+variable "key_vault_secrets_provider_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Secrets Store CSI Driver (AKV provider)."
+  nullable    = false
+}
+
+variable "secret_rotation_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable secret rotation (requires AKV CSI)."
+  nullable    = false
+}
+
+variable "secret_rotation_interval" {
+  type        = string
+  default     = "2m"
+  description = "Secret rotation poll interval (used when rotation enabled)."
+  nullable    = false
+}
+
+variable "rotation_policy_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether or not to enable rotation policy"
+}
+
+variable "rotation_policy" {
+  type = map(object({
+    time_before_expiry   = string
+    expire_after         = string
+    notify_before_expiry = string
+  }))
+  default = {
+    example_rotation_policy = {
+      time_before_expiry   = "P30D"
+      expire_after         = "P90D"
+      notify_before_expiry = "P29D"
+    }
+  }
+  description = "Key Vault certificate rotation policy configuration with ISO 8601 duration format (e.g., P30D for 30 days)"
+}
+
+variable "expiration_date" {
+  type        = string
+  default     = "2026-09-17T23:59:59Z"
+  description = "Expiration UTC datetime (Y-m-d'T'H:M:S'Z')"
+}
+
+##-----------------------------------------------------------------------------
+## Customer-Managed Keys (CMK) Configuration
+##-----------------------------------------------------------------------------
+variable "cmk_enabled" {
+  type        = bool
+  default     = true
+  description = "Flag to control resource creation related to CMK encryption."
+}
+
+variable "cmk_key_type" {
+  type        = string
+  default     = "RSA-HSM"
+  description = "Key type (e.g., RSA, EC)."
+}
+
+variable "cmk_key_size" {
+  type        = number
+  default     = 2048
+  description = "Key size for RSA (2048/3072/4096)."
+}
+
+variable "cmk_key_ops" {
+  type        = set(string)
+  default     = ["decrypt", "encrypt", "sign", "unwrapKey", "verify", "wrapKey"]
+  description = "Allowed key operations."
+}
+
 variable "cmk_des_key_permissions" {
   type        = list(string)
   default     = ["Get", "WrapKey", "UnwrapKey"]
@@ -1016,20 +1064,27 @@ variable "cmk_kubelet_secret_permissions" {
   description = "Secret permissions for the kubelet identity."
 }
 
-variable "cmk_key_type" {
+##-----------------------------------------------------------------------------
+## KMS Configuration
+##-----------------------------------------------------------------------------
+variable "kms_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Azure KeyVault Key Management Service."
+}
+
+variable "kms_key_vault_key_id" {
   type        = string
-  default     = "RSA"
-  description = "Key type (e.g., RSA, EC)."
+  default     = null
+  description = "Identifier of Azure Key Vault key (required if KMS enabled)."
 }
 
-variable "cmk_key_size" {
-  type        = number
-  default     = 2048
-  description = "Key size for RSA (2048/3072/4096)."
-}
-
-variable "cmk_key_ops" {
-  type        = set(string)
-  default     = ["decrypt", "encrypt", "sign", "unwrapKey", "verify", "wrapKey"]
-  description = "Allowed key operations."
+variable "kms_key_vault_network_access" {
+  type        = string
+  default     = "Public"
+  description = "Key Vault network access: `Private` or `Public`."
+  validation {
+    condition     = contains(["Private", "Public"], var.kms_key_vault_network_access)
+    error_message = "Possible values are `Private` and `Public`"
+  }
 }

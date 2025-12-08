@@ -11,22 +11,22 @@ data "azurerm_client_config" "current_client_config" {}
 ## Resource Group
 ##-----------------------------------------------------------------------------
 module "resource_group" {
-  source      = "terraform-az-modules/resource-group/azure"
-  version     = "1.0.0"
+  source      = "terraform-az-modules/resource-group/azurerm"
+  version     = "1.0.3"
   name        = "core"
-  environment = "qa"
-  label_order = ["environment", "name", "location"]
-  location    = "canadacentral"
+  environment = "dev"
+  location    = "centralus"
+  label_order = ["name", "environment", "location"]
 }
 
 ##-----------------------------------------------------------------------------
-## Vnet
+## Virtual Network
 ##-----------------------------------------------------------------------------
 module "vnet" {
-  source              = "terraform-az-modules/vnet/azure"
-  version             = "1.0.0"
+  source              = "terraform-az-modules/vnet/azurerm"
+  version             = "1.0.3"
   name                = "core"
-  environment         = "qa"
+  environment         = "dev"
   label_order         = ["name", "environment", "location"]
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -37,8 +37,8 @@ module "vnet" {
 ## Subnet
 ##-----------------------------------------------------------------------------
 module "subnet" {
-  source               = "terraform-az-modules/subnet/azure"
-  version              = "1.0.0"
+  source               = "terraform-az-modules/subnet/azurerm"
+  version              = "1.0.1"
   environment          = "dev"
   label_order          = ["name", "environment", "location"]
   resource_group_name  = module.resource_group.resource_group_name
@@ -52,12 +52,12 @@ module "subnet" {
   ]
 }
 
-# ------------------------------------------------------------------------------
-# Log Analytics
-# ------------------------------------------------------------------------------
+##-----------------------------------------------------------------------------
+## Log Analytics Workspace
+##-----------------------------------------------------------------------------
 module "log-analytics" {
-  source                      = "terraform-az-modules/log-analytics/azure"
-  version                     = "1.0.0"
+  source                      = "terraform-az-modules/log-analytics/azurerm"
+  version                     = "1.0.2"
   name                        = "core"
   environment                 = "dev"
   label_order                 = ["name", "environment", "location"]
@@ -67,15 +67,37 @@ module "log-analytics" {
   log_analytics_workspace_id  = module.log-analytics.workspace_id
 }
 
-# ------------------------------------------------------------------------------
-# Key Vault
-# ------------------------------------------------------------------------------
+##-----------------------------------------------------------------------------
+## Private DNS Zone
+##-----------------------------------------------------------------------------
+module "private_dns_zone" {
+  source              = "terraform-az-modules/private-dns/azurerm"
+  version             = "1.0.2"
+  location            = module.resource_group.resource_group_location
+  name                = "dns"
+  environment         = "dev"
+  resource_group_name = module.resource_group.resource_group_name
+  label_order         = ["name", "environment", "location"]
+  private_dns_config = [
+    {
+      resource_type = "azure_kubernetes"
+      vnet_ids      = [module.vnet.vnet_id]
+    },
+    {
+      resource_type = "key_vault"
+      vnet_ids      = [module.vnet.vnet_id]
+    }
+  ]
+}
+
+##-----------------------------------------------------------------------------
+## Key Vault
+##-----------------------------------------------------------------------------
 module "vault" {
-  source                        = "terraform-az-modules/key-vault/azure"
-  version                       = "1.0.0"
+  source                        = "terraform-az-modules/key-vault/azurerm"
+  version                       = "1.0.1"
   name                          = "core"
   environment                   = "dev"
-  custom_name                   = "hhiuihjoi08"
   label_order                   = ["name", "environment", "location"]
   resource_group_name           = module.resource_group.resource_group_name
   location                      = module.resource_group.resource_group_location
@@ -98,29 +120,9 @@ module "vault" {
   log_analytics_workspace_id = module.log-analytics.workspace_id
 }
 
-# ------------------------------------------------------------------------------
-# Private DNS Zone
-# ------------------------------------------------------------------------------
-module "private_dns_zone" {
-  source              = "terraform-az-modules/private-dns/azure"
-  version             = "1.0.0"
-  location            = module.resource_group.resource_group_location
-  name                = "dns"
-  environment         = "dev"
-  resource_group_name = module.resource_group.resource_group_name
-  label_order         = ["name", "environment", "location"]
-  private_dns_config = [
-    {
-      resource_type = "azure_kubernetes"
-      vnet_ids      = [module.vnet.vnet_id]
-    },
-    {
-      resource_type = "key_vault"
-      vnet_ids      = [module.vnet.vnet_id]
-    }
-  ]
-}
-
+##-----------------------------------------------------------------------------
+## Azure Kubernetes Service (AKS)
+##-----------------------------------------------------------------------------
 module "aks" {
   source                  = "../../"
   name                    = "core"
@@ -129,37 +131,25 @@ module "aks" {
   location                = module.resource_group.resource_group_location
   private_dns_zone_id     = module.private_dns_zone.private_dns_zone_ids.azure_kubernetes
   private_cluster_enabled = true
-
-  private_dns_zone_type = "Custom"
-  vnet_id               = module.vnet.vnet_id
-  kubernetes_version    = "1.30"
+  vnet_id                 = module.vnet.vnet_id
   default_node_pool_config = {
-    name                          = "agentpool"
-    node_count                    = 1
-    vm_size                       = "Standard_D2_v3"
-    os_type                       = "Linux"
-    enable_auto_scaling           = false
-    enable_host_encryption        = false
-    min_count                     = null
-    max_count                     = null
-    type                          = "VirtualMachineScaleSets"
-    node_taints                   = null
-    vnet_subnet_id                = module.subnet.subnet_ids.subnet1
-    max_pods                      = 30
-    os_disk_type                  = "Managed"
-    os_disk_size_gb               = 128
-    host_group_id                 = null
-    orchestrator_version          = null
-    enable_node_public_ip         = false
-    mode                          = "System"
-    node_soak_duration_in_minutes = null
-    max_surge                     = null
-    drain_timeout_in_minutes      = null
-    zones                         = []
-    node_labels                   = {}
-    only_critical_addons_enabled  = true
+    name                         = "agentpool"
+    node_count                   = 1
+    vm_size                      = "Standard_D2s_v3"
+    os_type                      = "Linux"
+    enable_auto_scaling          = false
+    enable_host_encryption       = true
+    type                         = "VirtualMachineScaleSets"
+    node_taints                  = null
+    vnet_subnet_id               = module.subnet.subnet_ids.subnet1
+    max_pods                     = 50
+    only_critical_addons_enabled = true
+    os_disk_type                 = "Ephemeral"
+    os_disk_size_gb              = 30
+    enable_node_public_ip        = false
+    mode                         = "System"
+    only_critical_addons_enabled = true
   }
-
   key_vault_id               = module.vault.id
   admin_objects_ids          = [data.azurerm_client_config.current_client_config.object_id]
   microsoft_defender_enabled = false

@@ -2,7 +2,7 @@
 
 # Terraform Azure AKS (Azure Kubernetes Service)
 
-This directory contains an example usage of the **terraform-azure-aks** module. It demonstrates how to deploy an Azure Kubernetes Service cluster with private endpoint configuration, custom DNS zone
+This directory contains an example usage of the **terraform-azure-aks** module. It demonstrates how to deploy a Private Azure Kubernetes Service cluster with Key Vault integration, Log Analytics monitoring, and private DNS configuration.
 
 ---
 
@@ -27,12 +27,12 @@ This directory contains an example usage of the **terraform-azure-aks** module. 
 
 | Name               | Source                                        | Version |
 |--------------------|-----------------------------------------------|---------|
-| resource_group     | terraform-az-modules/resource-group/azure     | 1.0.0   |
-| vnet               | terraform-az-modules/vnet/azure               | 1.0.0   |
-| subnet             | terraform-az-modules/subnet/azure             | 1.0.0   |
-| log-analytics      | terraform-az-modules/log-analytics/azure      | 1.0.0   |
+| resource_group     | terraform-az-modules/resource-group/azurerm   | 1.0.3   |
+| vnet               | terraform-az-modules/vnet/azurerm             | 1.0.3   |
+| subnet             | terraform-az-modules/subnet/azurerm           | 1.0.1   |
+| log-analytics      | terraform-az-modules/log-analytics/azure      | 1.0.1   |
 | vault              | terraform-az-modules/key-vault/azure          | 1.0.0   |
-| private_dns_zone   | terraform-az-modules/private-dns/azure        | 1.0.0   |
+| private_dns_zone   | terraform-az-modules/private-dns/azure        | 1.0.1   |
 | aks                | ../../                                        | n/a     |
 
 ---
