@@ -94,7 +94,6 @@ module "vault" {
   version                       = "1.0.1"
   name                          = "core"
   environment                   = "dev"
-  custom_name                   = "kdkd03kde"
   label_order                   = ["name", "environment", "location"]
   resource_group_name           = module.resource_group.resource_group_name
   location                      = module.resource_group.resource_group_location
@@ -133,20 +132,10 @@ module "aks" {
   vnet_id                    = module.vnet.vnet_id
   log_analytics_workspace_id = module.log-analytics.workspace_id
   default_node_pool_config = {
-    name                         = "agentpool"
-    node_count                   = 1
-    vm_size                      = "Standard_D2s_v3"
-    os_type                      = "Linux"
-    enable_auto_scaling          = false
-    enable_host_encryption       = true
-    vnet_subnet_id               = module.subnet.subnet_ids.subnet1
-    type                         = "VirtualMachineScaleSets"
-    max_pods                     = 50
-    os_disk_type                 = "Ephemeral"
-    os_disk_size_gb              = 30
-    enable_node_public_ip        = false
-    mode                         = "System"
-    only_critical_addons_enabled = true
+    enable_auto_scaling = false
+    vnet_subnet_id      = module.subnet.subnet_ids.subnet1
+    os_disk_type        = "Ephemeral"
+    os_disk_size_gb     = 32
   }
   # Microsoft Entra ID integration with Azure RBAC
   local_account_disabled = true

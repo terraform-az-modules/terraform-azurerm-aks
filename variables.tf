@@ -93,7 +93,7 @@ variable "resource_group_name" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.31"
+  default     = "1.33"
   description = "Version of Kubernetes to deploy"
 }
 
@@ -286,25 +286,26 @@ variable "load_balancer_profile_outbound_ports_allocated" {
 ##-----------------------------------------------------------------------------
 variable "default_node_pool_config" {
   description = "Configuration for the default system node pool"
+
   type = object({
-    name                         = optional(string, null)
-    node_count                   = optional(number, null)
-    vm_size                      = optional(string, null)
+    name                         = optional(string, "agentpool")
+    node_count                   = optional(number, 1)
+    vm_size                      = optional(string, "Standard_D2s_v3")
     enable_auto_scaling          = optional(bool, false)
-    enable_host_encryption       = optional(bool, null)
+    enable_host_encryption       = optional(bool, true)
     min_count                    = optional(number, null)
     max_count                    = optional(number, null)
-    type                         = optional(string, null)
+    type                         = optional(string, "VirtualMachineScaleSets")
     vnet_subnet_id               = string
-    max_pods                     = optional(number, null)
-    os_disk_type                 = optional(string, null)
-    os_disk_size_gb              = optional(number, null)
+    max_pods                     = optional(number, 50)
+    os_disk_type                 = optional(string, "Managed")
+    os_disk_size_gb              = optional(number, 128)
     os_sku                       = optional(string, null)
     orchestrator_version         = optional(string, null)
-    enable_node_public_ip        = optional(bool, null)
+    enable_node_public_ip        = optional(bool, false)
     zones                        = optional(list(string), null)
     node_labels                  = optional(map(string), null)
-    only_critical_addons_enabled = optional(bool, null)
+    only_critical_addons_enabled = optional(bool, true)
     fips_enabled                 = optional(bool, null)
     proximity_placement_group_id = optional(string, null)
     scale_down_mode              = optional(string, null)
@@ -340,13 +341,13 @@ variable "agents_pool_drain_timeout_in_minutes" {
 variable "node_pools" {
   description = "Map of additional node pools"
   type = map(object({
-    vm_size                       = optional(string, null)
-    os_type                       = optional(string, null)
+    vm_size                       = optional(string, "Standard_D2s_v3")
+    os_type                       = optional(string, "Linux")
     os_disk_type                  = optional(string, null)
     os_disk_size_gb               = optional(number, null)
     vnet_subnet_id                = string
     enable_auto_scaling           = optional(bool, false)
-    enable_host_encryption        = optional(bool, null)
+    enable_host_encryption        = optional(bool, true)
     eviction_policy               = optional(string, null)
     gpu_instance                  = optional(string)
     os_sku                        = optional(string, null)
@@ -356,7 +357,7 @@ variable "node_pools" {
     max_count                     = optional(number, null)
     max_pods                      = optional(number, 50)
     enable_node_public_ip         = optional(bool, null)
-    mode                          = optional(string, null)
+    mode                          = optional(string, "User")
     orchestrator_version          = optional(string, null)
     node_taints                   = optional(list(string), null)
     host_group_id                 = optional(string, null)

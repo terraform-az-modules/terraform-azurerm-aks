@@ -133,21 +133,10 @@ module "aks" {
   private_cluster_enabled = true
   vnet_id                 = module.vnet.vnet_id
   default_node_pool_config = {
-    name                         = "agentpool"
-    node_count                   = 1
-    vm_size                      = "Standard_D2s_v3"
-    os_type                      = "Linux"
-    enable_auto_scaling          = false
-    enable_host_encryption       = true
-    type                         = "VirtualMachineScaleSets"
-    node_taints                  = null
-    vnet_subnet_id               = module.subnet.subnet_ids.subnet1
-    max_pods                     = 50
-    only_critical_addons_enabled = true
-    os_disk_type                 = "Ephemeral"
-    os_disk_size_gb              = 30
-    enable_node_public_ip        = false
-    mode                         = "System"
+    enable_auto_scaling = false
+    vnet_subnet_id      = module.subnet.subnet_ids.subnet1
+    os_disk_type        = "Ephemeral"
+    os_disk_size_gb     = 32
   }
   key_vault_id               = module.vault.id
   admin_objects_ids          = [data.azurerm_client_config.current_client_config.object_id]

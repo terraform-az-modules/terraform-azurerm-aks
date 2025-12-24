@@ -20,7 +20,7 @@ data "azurerm_client_config" "current" {}
 ##-----------------------------------------------------------------------------
 ## AKS Cluster
 ##-----------------------------------------------------------------------------
-resource "azurerm_kubernetes_cluster" "aks" {
+resource "azurerm_kubernetes_cluster" "main" {
   count                             = var.enable ? 1 : 0
   name                              = var.resource_position_prefix ? format("aks-%s", local.name) : format("%s-aks", local.name)
   location                          = var.location
@@ -40,7 +40,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   role_based_access_control_enabled = var.role_based_access_control_enabled
   local_account_disabled            = var.local_account_disabled
   dynamic "default_node_pool" {
-    for_each = var.default_node_pool_config.enable_auto_scaling == false ? [var.default_node_pool_config] : []
+    for_each = [var.default_node_pool_config]
     content {
       name                         = default_node_pool.value.name
       node_count                   = default_node_pool.value.node_count
@@ -262,44 +262,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
       azure_rbac_enabled     = azure_active_directory_role_based_access_control.value.azure_rbac_enabled
     }
   }
-  dynamic "default_node_pool" {
-    for_each = var.default_node_pool_config.enable_auto_scaling == true ? [var.default_node_pool_config] : []
-    content {
-      name                         = default_node_pool.value.name
-      vm_size                      = default_node_pool.value.vm_size
-      auto_scaling_enabled         = default_node_pool.value.enable_auto_scaling
-      host_encryption_enabled      = default_node_pool.value.enable_host_encryption
-      max_count                    = default_node_pool.value.max_count
-      min_count                    = default_node_pool.value.min_count
-      max_pods                     = default_node_pool.value.max_pods
-      node_labels                  = default_node_pool.value.node_labels
-      node_public_ip_enabled       = default_node_pool.value.enable_node_public_ip
-      only_critical_addons_enabled = default_node_pool.value.only_critical_addons_enabled
-      orchestrator_version         = default_node_pool.value.orchestrator_version
-      os_disk_size_gb              = default_node_pool.value.os_disk_size_gb
-      os_disk_type                 = default_node_pool.value.os_disk_type
-      os_sku                       = default_node_pool.value.os_sku
-      proximity_placement_group_id = default_node_pool.value.proximity_placement_group_id
-      type                         = default_node_pool.value.type
-      vnet_subnet_id               = default_node_pool.value.vnet_subnet_id
-      zones                        = default_node_pool.value.zones
-      fips_enabled                 = default_node_pool.value.fips_enabled
-      scale_down_mode              = default_node_pool.value.scale_down_mode
-      snapshot_id                  = default_node_pool.value.snapshot_id
-      temporary_name_for_rotation  = default_node_pool.value.temporary_name_for_rotation
-      ultra_ssd_enabled            = default_node_pool.value.ultra_ssd_enabled
-      pod_subnet_id                = default_node_pool.value.pod_subnet_id
-      tags                         = merge(module.labels.tags, default_node_pool.value.tags)
-      dynamic "upgrade_settings" {
-        for_each = var.agents_pool_max_surge == null ? [] : ["upgrade_settings"]
-        content {
-          max_surge                     = var.agents_pool_max_surge
-          drain_timeout_in_minutes      = var.agents_pool_drain_timeout_in_minutes
-          node_soak_duration_in_minutes = var.agents_pool_node_soak_duration_in_minutes
-        }
-      }
-    }
-  }
   dynamic "microsoft_defender" {
     for_each = var.microsoft_defender_enabled ? ["microsoft_defender"] : []
     content {
@@ -412,7 +374,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   for_each                      = var.enable ? var.node_pools : {}
-  kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks[0].id
+  kubernetes_cluster_id         = azurerm_kubernetes_cluster.main[0].id
   name                          = each.key
   vm_size                       = each.value.vm_size
   os_type                       = each.value.os_type
@@ -521,7 +483,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
 ##-----------------------------------------------------------------------------
 ## Key Vault Key for Encryption
 ##-----------------------------------------------------------------------------
-resource "azurerm_key_vault_key" "example" {
+resource "azurerm_key_vault_key" "main" {
   depends_on      = [azurerm_role_assignment.rbac_keyvault_crypto_officer]
   count           = var.enable && var.cmk_enabled ? 1 : 0
   name            = var.resource_position_prefix ? format("aks-encrypted-key-%s", local.name) : format("%s-aks-encrypted-key", local.name)
@@ -536,7 +498,6 @@ resource "azurerm_key_vault_key" "example" {
       automatic {
         time_before_expiry = rotation_policy.value.time_before_expiry
       }
-
       expire_after         = rotation_policy.value.expire_after
       notify_before_expiry = rotation_policy.value.notify_before_expiry
     }
@@ -551,7 +512,7 @@ resource "azurerm_disk_encryption_set" "main" {
   name                = var.resource_position_prefix ? format("aks-dsk-encrpted-%s", local.name) : format("%s-aks-dsk-encrpted", local.name)
   resource_group_name = var.resource_group_name
   location            = var.location
-  key_vault_key_id    = var.key_vault_id != null ? azurerm_key_vault_key.example[0].id : null
+  key_vault_key_id    = var.key_vault_id != null ? azurerm_key_vault_key.main[0].id : null
   identity {
     type = "SystemAssigned"
   }
@@ -573,7 +534,7 @@ resource "azurerm_key_vault_access_policy" "key_vault" {
   count        = var.enable && var.cmk_enabled ? 1 : 0
   key_vault_id = var.key_vault_id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = var.enable && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id : azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
+  object_id    = var.enable && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id : azurerm_kubernetes_cluster.main[0].identity[0].principal_id
 
   key_permissions         = var.cmk_aks_key_permissions
   certificate_permissions = var.cmk_aks_certificate_permissions
@@ -584,7 +545,7 @@ resource "azurerm_key_vault_access_policy" "kubelet_identity" {
   count        = var.enable && var.cmk_enabled ? 1 : 0
   key_vault_id = var.key_vault_id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
+  object_id    = azurerm_kubernetes_cluster.main[0].kubelet_identity[0].object_id
 
   key_permissions         = var.cmk_kubelet_key_permissions
   certificate_permissions = var.cmk_kubelet_certificate_permissions
@@ -595,10 +556,10 @@ resource "azurerm_key_vault_access_policy" "kubelet_identity" {
 ## Diagnostic Settings
 ##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
-  depends_on                     = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  depends_on                     = [azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
   name                           = var.resource_position_prefix ? format("aks-diag-log-%s", local.name) : format("%s-aks-diag-log", local.name)
-  target_resource_id             = azurerm_kubernetes_cluster.aks[0].id
+  target_resource_id             = azurerm_kubernetes_cluster.main[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
@@ -623,7 +584,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
-  depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.enable && var.diagnostic_setting_enable ? 1 : 0
   name                           = var.resource_position_prefix ? format("aks-pip-diag-log-%s", local.name) : format("%s-aks-pip-diag-log", local.name)
   target_resource_id             = data.azurerm_resources.aks_pip[count.index].resources[0].id
@@ -651,7 +612,7 @@ resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
-  depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks]
+  depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.main]
   count                          = var.enable && var.diagnostic_setting_enable ? 1 : 0
   name                           = var.resource_position_prefix ? format("aks-nsg-diag-log-%s", local.name) : format("%s-aks-nsg-diag-log", local.name)
   target_resource_id             = data.azurerm_resources.aks_nsg[count.index].resources[0].id
@@ -679,8 +640,8 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   }
 }
 
-resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
-  depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+resource "azurerm_monitor_diagnostic_setting" "main-nic" {
+  depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
   name                           = var.resource_position_prefix ? format("aks-nic-dia-log-%s", local.name) : format("%s-aks-nic-dia-log", local.name)
   target_resource_id             = data.azurerm_resources.aks_nic[count.index].resources[0].id
