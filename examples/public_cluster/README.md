@@ -2,7 +2,7 @@
 
 # Terraform Azure AKS (Azure Kubernetes Service)
 
-This directory contains an example usage of the **terraform-azure-aks** module. It demonstrates how to deploy a public Azure Kubernetes Service cluster with Key Vault integration, Log Analytics monitoring.
+This directory contains an example usage of the **terraform-azure-aks** module. It demonstrates how to deploy a Public Azure Kubernetes Service cluster with Key Vault integration, Log Analytics monitoring.
 
 ---
 

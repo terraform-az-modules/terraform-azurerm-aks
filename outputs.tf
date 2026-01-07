@@ -1,3 +1,6 @@
+##-----------------------------------------------------------------------------
+## Outputs
+##-----------------------------------------------------------------------------
 output "aks_id" {
   description = "The Kubernetes Managed Cluster ID."
   value       = try(azurerm_kubernetes_cluster.main[0].id, null)
