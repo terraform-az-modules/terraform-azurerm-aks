@@ -1084,3 +1084,161 @@ variable "aks_user_auth_role" {
   default     = []
   description = "Group and User role base access to AKS"
 }
+
+
+##-----------------------------------------------------------------------------------------------
+#  AKS BACKUP VARIABLES
+##-----------------------------------------------------------------------------------------------
+
+variable "enable_backup" {
+  type        = bool
+  default     = false
+  description = "This enables the aks backup Vault"
+}
+
+variable "enable_backup_policy" {
+  type        = bool
+  default     = true
+  description = "this enables aks backup policy"
+}
+
+variable "vault_datastore_type" {
+  type        = string
+  default     = "VaultStore"
+  description = "(Required) Specifies the type of the data store. Possible values are ArchiveStore, OperationalStore, SnapshotStore and VaultStore. Changing this forces a new resource to be created."
+}
+
+variable "aks_backup_redundancy" {
+  type        = string
+  default     = "LocallyRedundant"
+  description = "(Required) Specifies the backup storage redundancy. Possible values are GeoRedundant, LocallyRedundant and ZoneRedundant. Changing this forces a new Backup Vault to be created."
+}
+
+
+variable "retention_rules" {
+  description = "List of retention rules with lifecycle and criteria details."
+
+  type = list(object({
+    name     = string # Name of the retention rule (e.g., "Daily")
+    priority = number # Priority of the rule (lower number = higher priority)
+
+    life_cycle = object({
+      duration        = string # Duration of retention (e.g., "P84D")
+      data_store_type = string # Type of datastore (e.g., "OperationalStore")
+    })
+
+    criteria = object({
+      absolute_criteria      = optional(string)       # e.g., "FirstOfDay"
+      days_of_week           = optional(list(string)) # e.g., ["Thursday"]
+      months_of_year         = optional(list(string)) # e.g., ["November"]
+      weeks_of_month         = optional(list(string)) # e.g., ["First"]
+      scheduled_backup_times = optional(list(string)) # e.g., ["2023-05-23T02:30:00Z"]
+    })
+  }))
+  default = []
+  # Example:
+  #------------------------------------------------------------------------------
+  # default = [
+  #   {
+  #     name     = "Daily"
+  #     priority = 25
+  #     life_cycle = {
+  #       duration        = "P84D"
+  #       data_store_type = "OperationalStore"
+  #     }
+  #     criteria = {
+  #       absolute_criteria      = "FirstOfDay"
+  #       days_of_week           = []
+  #       months_of_year         = []
+  #       weeks_of_month         = []
+  #       scheduled_backup_times = ["2023-05-23T02:30:00Z"]
+  #     }
+  #   }
+  # ]
+}
+
+
+
+variable "default_retention_rules" {
+  description = "Map of retention rules with their lifecycle configurations"
+  type = map(object({
+    duration        = string
+    data_store_type = string
+  }))
+  default = {
+    default = {
+      duration        = "P7D"
+      data_store_type = "OperationalStore"
+    }
+  }
+}
+
+variable "backup_datasource_parameters" {
+  description = "Configuration parameters for backup datasource"
+  type = object({
+    excluded_namespaces              = optional(list(string))
+    excluded_resource_types          = optional(list(string))
+    cluster_scoped_resources_enabled = bool
+    included_namespaces              = list(string)
+    included_resource_types          = optional(list(string))
+    label_selectors                  = optional(list(string))
+    volume_snapshot_enabled          = bool
+  })
+  default = {
+    excluded_namespaces              = []
+    excluded_resource_types          = []
+    cluster_scoped_resources_enabled = false
+    included_namespaces              = []
+    included_resource_types          = []
+    label_selectors                  = []
+    volume_snapshot_enabled          = false
+  }
+  # Example:
+  #----------------------------------------------------------------------
+  # default = {
+  #   excluded_namespaces              = ["test-excluded-namespaces"]
+  #   excluded_resource_types          = ["exvolumesnapshotcontents.snapshot.storage.k8s.io"]
+  #   cluster_scoped_resources_enabled = true
+  #   included_namespaces              = ["zitadel"]
+  #   included_resource_types          = ["deployments", "statefulsets", "secrets", "configmaps"]
+  #   label_selectors                  = ["app.kubernetes.io/component=cockroachdb"]
+  #   volume_snapshot_enabled          = true
+  # }
+}
+
+
+variable "backup_storage_account" {
+  description = "Created backup storage account "
+  type        = string
+  default     = ""
+}
+
+variable "backup_container_name" {
+  description = "Name of container where backup is stored"
+  type        = string
+  default     = "backup"
+}
+
+variable "release_train" {
+  description = "(Optional) The release train used by this extension. Possible values include but are not limited to Stable, Preview. Changing this forces a new Kubernetes Cluster Extension to be created."
+  type        = string
+  default     = "Stable"
+}
+
+variable "release_namespace" {
+  description = " (Optional) Namespace where the extension release must be placed for a cluster scoped extension. If this namespace does not exist, it will be created. "
+  type        = string
+  default     = "dataprotection-microsoft"
+}
+
+variable "snapshot_resource_group_name" {
+  description = " (Required) The name of the Resource Group where snapshots are stored. "
+  type        = string
+  default     = "snapshot-rg"
+}
+
+variable "snapshot_resource_group_location" {
+  description = "location of snapshot resource group"
+  type        = string
+  default     = "West Europe"
+}
