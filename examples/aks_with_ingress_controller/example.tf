@@ -247,11 +247,14 @@ module "aks" {
     os_disk_type        = "Ephemeral"
     os_disk_size_gb     = 32
   }
-  key_vault_id               = module.vault.id
-  admin_objects_ids          = [data.azurerm_client_config.current_client_config.object_id]
-  microsoft_defender_enabled = false
-  diagnostic_setting_enable  = false
-  log_analytics_workspace_id = module.log-analytics.workspace_id
-  use_existing_appgw         = true
-  gateway_id                 = module.application_gateway.application_gateway_id
+  key_vault_id                       = module.vault.id
+  admin_objects_ids                  = [data.azurerm_client_config.current_client_config.object_id]
+  microsoft_defender_enabled         = false
+  diagnostic_setting_enable          = false
+  log_analytics_workspace_id         = module.log-analytics.workspace_id
+  gateway_id                         = module.application_gateway.application_gateway_id
+  enable_ingress_application_gateway = true
+  ingress_application_gateway = {
+    gateway_id = module.application_gateway.application_gateway_id
+  }
 }

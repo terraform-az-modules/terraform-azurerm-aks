@@ -154,14 +154,14 @@ resource "azurerm_role_assignment" "test_cluster_msi_contributor_on_snap_rg" {
 }
 
 resource "azurerm_role_assignment" "app_gw_role" {
-  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  count                = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   principal_id         = data.azurerm_user_assigned_identity.appgw_uami[0].principal_id
   scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, azurerm_kubernetes_cluster.main[0].node_resource_group)
   role_definition_name = "Contributor"
 }
 
 resource "azurerm_role_assignment" "agic_appgw_contributor" {
-  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  count                = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   scope                = var.gateway_id
   role_definition_name = "Contributor"
   principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
@@ -169,7 +169,7 @@ resource "azurerm_role_assignment" "agic_appgw_contributor" {
 }
 
 resource "azurerm_role_assignment" "agic_rg_reader" {
-  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  count                = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   scope                = data.azurerm_resource_group.appgw_rg[0].id
   role_definition_name = "Reader"
   principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
@@ -177,15 +177,47 @@ resource "azurerm_role_assignment" "agic_rg_reader" {
 }
 
 resource "azurerm_role_assignment" "appgw_identity_operator" {
-  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  count                = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   scope                = data.azurerm_user_assigned_identity.appgw_uami[0].id
   role_definition_name = "Managed Identity Operator"
   principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
 
 resource "azurerm_role_assignment" "appgw_subnet_join" {
-  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  count                = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   scope                = data.azurerm_application_gateway.appgw[0].gateway_ip_configuration[0].subnet_id
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+}
+
+##-----------------------------------------------------------------------------
+## Key Vault Access Policies
+##-----------------------------------------------------------------------------
+resource "azurerm_key_vault_access_policy" "disk_policy" {
+  count                   = var.enable && var.cmk_enabled ? 1 : 0
+  key_vault_id            = var.key_vault_id
+  tenant_id               = azurerm_disk_encryption_set.main[0].identity[0].tenant_id
+  object_id               = azurerm_disk_encryption_set.main[0].identity[0].principal_id
+  key_permissions         = var.cmk_des_key_permissions
+  certificate_permissions = var.cmk_des_certificate_permissions
+}
+
+resource "azurerm_key_vault_access_policy" "aks_policy" {
+  count                   = var.enable && var.cmk_enabled ? 1 : 0
+  key_vault_id            = var.key_vault_id
+  tenant_id               = data.azurerm_client_config.current.tenant_id
+  object_id               = var.enable && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id : azurerm_kubernetes_cluster.main[0].identity[0].principal_id
+  key_permissions         = var.cmk_aks_key_permissions
+  certificate_permissions = var.cmk_aks_certificate_permissions
+  secret_permissions      = var.cmk_aks_secret_permissions
+}
+
+resource "azurerm_key_vault_access_policy" "kubelet_policy" {
+  count                   = var.enable && var.cmk_enabled ? 1 : 0
+  key_vault_id            = var.key_vault_id
+  tenant_id               = data.azurerm_client_config.current.tenant_id
+  object_id               = azurerm_kubernetes_cluster.main[0].kubelet_identity[0].object_id
+  key_permissions         = var.cmk_kubelet_key_permissions
+  certificate_permissions = var.cmk_kubelet_certificate_permissions
+  secret_permissions      = var.cmk_kubelet_secret_permissions
 }

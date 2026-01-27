@@ -118,6 +118,18 @@ variable "aks_sku_tier" {
   description = "AKS SKU tier. Possible values are Free or Paid"
 }
 
+variable "dns_prefix" {
+  type        = string
+  default     = "azure-kubernates"
+  description = "DNS prefix for the AKS cluster. If null, will be auto-generated from cluster name"
+}
+
+variable "dns_prefix_private_cluster" {
+  type        = string
+  default     = null
+  description = "DNS prefix for private AKS cluster. Only used when dns_prefix is null and private_cluster_enabled is true"
+}
+
 variable "automatic_channel_upgrade" {
   type        = string
   default     = null
@@ -128,12 +140,6 @@ variable "local_account_disabled" {
   type        = bool
   default     = false
   description = "Disable local account?"
-}
-
-variable "dns_prefix_private_cluster" {
-  type        = string
-  default     = null
-  description = "Enable private cluster with network security group prefix configuration"
 }
 
 variable "cost_analysis_enabled" {
@@ -164,7 +170,6 @@ variable "node_os_upgrade_channel" {
   type        = string
   default     = "NodeImage"
   description = "The upgrade channel for node OS image updates. Valid values: Unmanaged, SecurityPatch, NodeImage, None"
-
   validation {
     condition     = can(regex("^(Unmanaged|SecurityPatch|NodeImage|None)$", var.node_os_upgrade_channel))
     error_message = "node_os_upgrade_channel must be one of: Unmanaged, SecurityPatch, NodeImage, None"
@@ -199,7 +204,6 @@ variable "support_plan" {
   type        = string
   default     = "KubernetesOfficial"
   description = "The support plan for the AKS cluster. Valid values: KubernetesOfficial, AKSLongTermSupport"
-
   validation {
     condition     = can(regex("^(KubernetesOfficial|AKSLongTermSupport)$", var.support_plan))
     error_message = "support_plan must be either KubernetesOfficial or AKSLongTermSupport"
@@ -258,7 +262,6 @@ variable "node_network_profile" {
   default     = null
   description = "Node network profile configuration for the node pool including public IP tags, security groups, and allowed host ports"
 }
-
 
 ##-----------------------------------------------------------------------------
 ## Network Configuration
@@ -422,7 +425,6 @@ variable "load_balancer_profile_backend_pool_type" {
 ## Default Node Pool Configuration
 ##-----------------------------------------------------------------------------
 variable "default_node_pool_config" {
-  description = "Configuration for the default system node pool"
   type = object({
     name                          = optional(string, "agentpool")
     node_count                    = optional(number, 1)
@@ -458,6 +460,7 @@ variable "default_node_pool_config" {
     node_public_ip_prefix_id      = optional(string, null)
     workload_runtime              = optional(string, null)
   })
+  description = "Configuration for the default system node pool"
 }
 
 variable "agents_pool_max_surge" {
@@ -488,7 +491,6 @@ variable "agents_pool_undrainable_node_behavior" {
 ## Additional Node Pools Configuration
 ##-----------------------------------------------------------------------------
 variable "node_pools" {
-  description = "Map of additional node pools"
   type = map(object({
     vm_size                       = optional(string, "Standard_D2s_v3")
     os_type                       = optional(string, "Linux")
@@ -527,13 +529,8 @@ variable "node_pools" {
     tags                          = optional(map(string), null)
     ultra_ssd_enabled             = optional(bool, null)
   }))
-  default = {}
-}
-
-variable "node_public_ip_tags" {
-  type        = map(string)
   default     = {}
-  description = "Tags for node public IPs."
+  description = "Map of additional node pools"
 }
 
 ##-----------------------------------------------------------------------------
@@ -720,12 +717,12 @@ variable "workload_autoscaler_profile" {
 ## Linux Profile Configuration
 ##-----------------------------------------------------------------------------
 variable "linux_profile" {
-  description = "Username and ssh key for accessing AKS Linux nodes with ssh."
   type = object({
     username = string,
     ssh_key  = string
   })
-  default = null
+  default     = null
+  description = "Username and ssh key for accessing AKS Linux nodes with ssh."
 }
 
 ##-----------------------------------------------------------------------------
@@ -804,12 +801,12 @@ variable "admin_objects_ids" {
 }
 
 variable "user_aks_roles" {
-  description = "Map of role definitions to their respective admin group IDs"
   type = map(object({
     role_definition = string
     principal_ids   = list(string)
   }))
-  default = null
+  default     = null
+  description = "Map of role definitions to their respective admin group IDs"
 }
 
 variable "aks_user_auth_role" {
@@ -930,27 +927,8 @@ variable "advanced_networking" {
   description = "Advanced networking configuration to enable observability and security features for the cluster"
 }
 
-
 variable "gateway_id" {
   description = "ID of an existing Application Gateway to integrate with AKS (BYO App Gateway)."
-  type        = string
-  default     = null
-}
-
-variable "gateway_name" {
-  description = "Name of the Application Gateway to be created by AKS when gateway_id is not provided."
-  type        = string
-  default     = null
-}
-
-variable "subnet_id" {
-  description = "Subnet ID for the Application Gateway (required when AKS creates the gateway)."
-  type        = string
-  default     = null
-}
-
-variable "subnet_cidr" {
-  description = "Subnet CIDR for the Application Gateway (used when subnet_id is not provided)."
   type        = string
   default     = null
 }
@@ -964,11 +942,47 @@ variable "upgrade_override" {
   description = "Upgrade override configuration to force cluster upgrades until a specified date/time"
 }
 
-variable "use_existing_appgw" {
-  description = "True if using an existing (BYO) Application Gateway via gateway_id."
+variable "enable_ingress_application_gateway" {
   type        = bool
   default     = false
+  description = "Enable Application Gateway Ingress Controller (AGIC) for AKS"
 }
+
+variable "ingress_application_gateway" {
+  type = object({
+    gateway_id   = optional(string)
+    gateway_name = optional(string)
+    subnet_id    = optional(string)
+    subnet_cidr  = optional(string)
+  })
+  default     = null
+  description = "AGIC configuration for AKS. Use gateway_id for existing App Gateway, or gateway_name with subnet_id/subnet_cidr for AKS-managed gateway."
+  validation {
+    condition = (
+      var.ingress_application_gateway == null ||
+
+      (
+        var.ingress_application_gateway.gateway_id != null &&
+        var.ingress_application_gateway.gateway_name == null &&
+        var.ingress_application_gateway.subnet_id == null &&
+        var.ingress_application_gateway.subnet_cidr == null
+      ) ||
+
+      (
+        var.ingress_application_gateway.gateway_id == null &&
+        var.ingress_application_gateway.gateway_name != null &&
+        (
+          var.ingress_application_gateway.subnet_id != null ||
+          var.ingress_application_gateway.subnet_cidr != null
+        )
+      )
+    )
+
+    error_message = "Invalid ingress_application_gateway config. Use only gateway_id OR gateway_name with subnet_id/subnet_cidr."
+  }
+
+}
+
 ##-----------------------------------------------------------------------------
 ## Storage Configuration
 ##-----------------------------------------------------------------------------
@@ -1056,11 +1070,11 @@ variable "pip_logs" {
     category       = optional(list(string))
     category_group = optional(list(string))
   })
-  description = "Configuration for Public IP diagnostic log settings. Specify log categories or category groups to collect"
   default = {
     enabled        = true
     category_group = ["AllLogs"]
   }
+  description = "Configuration for Public IP diagnostic log settings. Specify log categories or category groups to collect"
 }
 
 variable "kv_logs" {
@@ -1069,11 +1083,11 @@ variable "kv_logs" {
     category       = optional(list(string))
     category_group = optional(list(string))
   })
-  description = "Configuration for Key Vault diagnostic log settings. Specify log categories or category groups to collect"
   default = {
     enabled        = true
     category_group = ["AllLogs"]
   }
+  description = "Configuration for Key Vault diagnostic log settings. Specify log categories or category groups to collect"
 }
 
 ##-----------------------------------------------------------------------------
