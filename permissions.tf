@@ -93,3 +93,99 @@ resource "azurerm_user_assigned_identity" "aks_user_assigned_identity" {
   resource_group_name = var.resource_group_name
   location            = var.location
 }
+
+resource "azurerm_role_assignment" "test_extension_and_storage_account_permission" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = var.backup_storage_account_id
+  role_definition_name = "Storage Account Contributor"
+  principal_id         = azurerm_kubernetes_cluster_extension.backup_cluster_extension[0].aks_assigned_identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "test_extension_and_storage_blob_data_permission" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = var.backup_storage_account_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_kubernetes_cluster_extension.backup_cluster_extension[0].aks_assigned_identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "test_vault_msi_read_on_cluster" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = azurerm_kubernetes_cluster.main[0].id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "test_vault_msi_read_on_snap_rg" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = var.snapshot_resource_group_id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "test_vault_msi_snapshot_contributor_on_snap_rg" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = var.snapshot_resource_group_id
+  role_definition_name = "Disk Snapshot Contributor"
+  principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "test_vault_data_operator_on_snap_rg" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = var.snapshot_resource_group_id
+  role_definition_name = "Data Operator for Managed Disks"
+  principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "test_vault_data_contributor_on_storage" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = var.backup_storage_account_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "test_cluster_msi_contributor_on_snap_rg" {
+  count                = var.enable && var.enable_backup == true ? 1 : 0
+  scope                = var.snapshot_resource_group_id
+  role_definition_name = "Contributor"
+  principal_id         = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id : azurerm_kubernetes_cluster.main[0].identity[0].principal_id
+  depends_on = [
+    azurerm_kubernetes_cluster.main
+  ]
+}
+
+resource "azurerm_role_assignment" "app_gw_role" {
+  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  principal_id         = data.azurerm_user_assigned_identity.appgw_uami[0].principal_id
+  scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, azurerm_kubernetes_cluster.main[0].node_resource_group)
+  role_definition_name = "Contributor"
+}
+
+resource "azurerm_role_assignment" "agic_appgw_contributor" {
+  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  scope                = var.gateway_id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+  depends_on           = [azurerm_kubernetes_cluster.main]
+}
+
+resource "azurerm_role_assignment" "agic_rg_reader" {
+  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  scope                = data.azurerm_resource_group.appgw_rg[0].id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+  depends_on           = [azurerm_kubernetes_cluster.main]
+}
+
+resource "azurerm_role_assignment" "appgw_identity_operator" {
+  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  scope                = data.azurerm_user_assigned_identity.appgw_uami[0].id
+  role_definition_name = "Managed Identity Operator"
+  principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+}
+
+resource "azurerm_role_assignment" "appgw_subnet_join" {
+  count                = var.enable && var.use_existing_appgw ? 1 : 0
+  scope                = data.azurerm_application_gateway.appgw[0].gateway_ip_configuration[0].subnet_id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+}

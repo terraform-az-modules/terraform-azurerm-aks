@@ -130,6 +130,136 @@ variable "local_account_disabled" {
   description = "Disable local account?"
 }
 
+variable "dns_prefix_private_cluster" {
+  type        = string
+  default     = null
+  description = "Enable private cluster with network security group prefix configuration"
+}
+
+variable "cost_analysis_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable cost analysis for the AKS cluster to track and optimize spending"
+}
+
+variable "custom_ca_trust_certificates_base64" {
+  type        = list(string)
+  default     = []
+  description = "List of custom Certificate Authority (CA) certificates in base64 format to be trusted by the cluster"
+}
+
+variable "http_application_routing_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable HTTP application routing addon (deprecated, not recommended for production)"
+}
+
+variable "ai_toolchain_operator_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable AI Toolchain Operator for running AI/ML workloads on the cluster"
+}
+
+variable "node_os_upgrade_channel" {
+  type        = string
+  default     = "NodeImage"
+  description = "The upgrade channel for node OS image updates. Valid values: Unmanaged, SecurityPatch, NodeImage, None"
+
+  validation {
+    condition     = can(regex("^(Unmanaged|SecurityPatch|NodeImage|None)$", var.node_os_upgrade_channel))
+    error_message = "node_os_upgrade_channel must be one of: Unmanaged, SecurityPatch, NodeImage, None"
+  }
+}
+
+variable "oidc_issuer_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable OIDC issuer for workload identity federation"
+}
+
+variable "workload_identity_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable workload identity for Azure AD pod-managed identity integration"
+}
+
+variable "private_cluster_public_fqdn_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable public FQDN for private cluster to allow access from public networks"
+}
+
+variable "run_command_enabled" {
+  type        = bool
+  default     = true
+  description = "Enable run command to execute commands on the cluster without direct network connectivity"
+}
+
+variable "support_plan" {
+  type        = string
+  default     = "KubernetesOfficial"
+  description = "The support plan for the AKS cluster. Valid values: KubernetesOfficial, AKSLongTermSupport"
+
+  validation {
+    condition     = can(regex("^(KubernetesOfficial|AKSLongTermSupport)$", var.support_plan))
+    error_message = "support_plan must be either KubernetesOfficial or AKSLongTermSupport"
+  }
+}
+
+variable "open_service_mesh_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Open Service Mesh (OSM) addon for service mesh capabilities"
+}
+
+variable "bootstrap_profile" {
+  type = object({
+    artifact_source       = string
+    container_registry_id = string
+  })
+  default     = null
+  description = "Bootstrap profile configuration for the AKS cluster to specify artifact source and container registry"
+}
+
+variable "monitor_metrics" {
+  type = object({
+    annotations_allowed = list(string)
+    labels_allowed      = list(string)
+  })
+  default     = null
+  description = "Configuration for Prometheus metrics collection, specifying allowed annotations and labels to scrape"
+}
+
+variable "maintenance_window" {
+  type = object({
+    allowed = optional(list(object({
+      day   = string
+      hours = list(number)
+    })))
+    not_allowed = optional(list(object({
+      start = string
+      end   = string
+    })))
+  })
+  default     = null
+  description = "Maintenance window configuration for the AKS cluster with allowed and not_allowed time periods"
+}
+
+variable "node_network_profile" {
+  type = object({
+    node_public_ip_tags            = map(string)
+    application_security_group_ids = list(string)
+    allowed_host_ports = list(object({
+      port_start = number
+      port_end   = number
+      protocol   = string
+    }))
+  })
+  default     = null
+  description = "Node network profile configuration for the node pool including public IP tags, security groups, and allowed host ports"
+}
+
+
 ##-----------------------------------------------------------------------------
 ## Network Configuration
 ##-----------------------------------------------------------------------------
@@ -218,8 +348,9 @@ variable "private_dns_zone_id" {
 ##-----------------------------------------------------------------------------
 variable "api_server_access_profile" {
   type = object({
-    authorized_ip_ranges = optional(list(string))
-    subnet_id            = optional(string)
+    authorized_ip_ranges                = optional(list(string))
+    subnet_id                           = optional(string)
+    virtual_network_integration_enabled = optional(bool)
   })
   default     = null
   description = "Control public/private API server exposure"
@@ -281,39 +412,51 @@ variable "load_balancer_profile_outbound_ports_allocated" {
   description = "SNAT ports per VM (0–64000)."
 }
 
+variable "load_balancer_profile_backend_pool_type" {
+  type        = string
+  default     = null
+  description = "SNAT ports per VM (0–64000)."
+}
+
 ##-----------------------------------------------------------------------------
 ## Default Node Pool Configuration
 ##-----------------------------------------------------------------------------
 variable "default_node_pool_config" {
   description = "Configuration for the default system node pool"
-
   type = object({
-    name                         = optional(string, "agentpool")
-    node_count                   = optional(number, 1)
-    vm_size                      = optional(string, "Standard_D2s_v3")
-    enable_auto_scaling          = optional(bool, false)
-    enable_host_encryption       = optional(bool, true)
-    min_count                    = optional(number, null)
-    max_count                    = optional(number, null)
-    type                         = optional(string, "VirtualMachineScaleSets")
-    vnet_subnet_id               = string
-    max_pods                     = optional(number, 50)
-    os_disk_type                 = optional(string, "Managed")
-    os_disk_size_gb              = optional(number, 128)
-    os_sku                       = optional(string, null)
-    orchestrator_version         = optional(string, null)
-    enable_node_public_ip        = optional(bool, false)
-    zones                        = optional(list(string), null)
-    node_labels                  = optional(map(string), null)
-    only_critical_addons_enabled = optional(bool, true)
-    fips_enabled                 = optional(bool, null)
-    proximity_placement_group_id = optional(string, null)
-    scale_down_mode              = optional(string, null)
-    snapshot_id                  = optional(string, null)
-    temporary_name_for_rotation  = optional(string, null)
-    ultra_ssd_enabled            = optional(bool, null)
-    pod_subnet_id                = optional(string, null)
-    tags                         = optional(map(string), null)
+    name                          = optional(string, "agentpool")
+    node_count                    = optional(number, 1)
+    vm_size                       = optional(string, "Standard_D2s_v3")
+    enable_auto_scaling           = optional(bool, false)
+    enable_host_encryption        = optional(bool, true)
+    min_count                     = optional(number, null)
+    max_count                     = optional(number, null)
+    type                          = optional(string, "VirtualMachineScaleSets")
+    vnet_subnet_id                = string
+    max_pods                      = optional(number, 50)
+    os_disk_type                  = optional(string, "Managed")
+    os_disk_size_gb               = optional(number, 128)
+    os_sku                        = optional(string, null)
+    orchestrator_version          = optional(string, null)
+    enable_node_public_ip         = optional(bool, false)
+    zones                         = optional(list(string), null)
+    node_labels                   = optional(map(string), null)
+    only_critical_addons_enabled  = optional(bool, true)
+    fips_enabled                  = optional(bool, null)
+    proximity_placement_group_id  = optional(string, null)
+    scale_down_mode               = optional(string, null)
+    snapshot_id                   = optional(string, null)
+    temporary_name_for_rotation   = optional(string, null)
+    ultra_ssd_enabled             = optional(bool, null)
+    pod_subnet_id                 = optional(string, null)
+    tags                          = optional(map(string), null)
+    capacity_reservation_group_id = optional(string, null)
+    gpu_driver                    = optional(string, null)
+    gpu_instance                  = optional(string, null)
+    host_group_id                 = optional(string, null)
+    kubelet_disk_type             = optional(string, null)
+    node_public_ip_prefix_id      = optional(string, null)
+    workload_runtime              = optional(string, null)
   })
 }
 
@@ -333,6 +476,12 @@ variable "agents_pool_drain_timeout_in_minutes" {
   type        = number
   default     = null
   description = "(Optional) The amount of time in minutes to wait on eviction of pods and graceful termination per node. This eviction wait time honors waiting on pod disruption budgets. If this time is exceeded, the upgrade fails. Unsetting this after configuring it will force a new resource to be created."
+}
+
+variable "agents_pool_undrainable_node_behavior" {
+  type        = string
+  default     = null
+  description = "Behavior for undrainable nodes during upgrade. Possible values are Schedule and Cordon"
 }
 
 ##-----------------------------------------------------------------------------
@@ -515,23 +664,26 @@ variable "auto_scaler_profile_enabled" {
 
 variable "auto_scaler_profile" {
   type = object({
-    balance_similar_node_groups      = bool
-    empty_bulk_delete_max            = number
-    expander                         = string
-    max_graceful_termination_sec     = string
-    max_node_provisioning_time       = string
-    max_unready_nodes                = number
-    max_unready_percentage           = number
-    new_pod_scale_up_delay           = string
-    scale_down_delay_after_add       = string
-    scale_down_delay_after_delete    = string
-    scale_down_delay_after_failure   = string
-    scale_down_unneeded              = string
-    scale_down_unready               = string
-    scale_down_utilization_threshold = string
-    scan_interval                    = string
-    skip_nodes_with_local_storage    = bool
-    skip_nodes_with_system_pods      = bool
+    balance_similar_node_groups                   = optional(bool)
+    empty_bulk_delete_max                         = optional(number)
+    expander                                      = optional(string)
+    max_graceful_termination_sec                  = optional(string)
+    max_node_provisioning_time                    = optional(string)
+    max_unready_nodes                             = optional(number)
+    max_unready_percentage                        = optional(number)
+    new_pod_scale_up_delay                        = optional(string)
+    scale_down_delay_after_add                    = optional(string)
+    scale_down_delay_after_delete                 = optional(string)
+    scale_down_delay_after_failure                = optional(string)
+    scale_down_unneeded                           = optional(string)
+    scale_down_unready                            = optional(string)
+    scale_down_utilization_threshold              = optional(string)
+    scan_interval                                 = optional(string)
+    skip_nodes_with_local_storage                 = optional(bool)
+    skip_nodes_with_system_pods                   = optional(bool)
+    daemonset_eviction_for_empty_nodes_enabled    = optional(bool)
+    daemonset_eviction_for_occupied_nodes_enabled = optional(bool)
+    ignore_daemonsets_utilization_enabled         = optional(bool)
   })
   default = {
     balance_similar_node_groups      = false
@@ -729,12 +881,94 @@ variable "service_mesh_profile" {
 
 variable "web_app_routing" {
   type = object({
-    dns_zone_ids = list(string)
+    dns_zone_ids             = list(string)
+    default_nginx_controller = optional(bool)
   })
   default     = null
   description = "Web App Routing configuration (DNS Zone IDs)."
 }
 
+variable "network_mode" {
+  type        = string
+  default     = null
+  description = "Network mode to be used with Azure CNI. Possible values are bridge and transparent"
+}
+
+variable "pod_cidrs" {
+  type        = list(string)
+  default     = null
+  description = "List of CIDR ranges for pods when using multiple pod CIDRs with network plugin"
+}
+
+variable "service_cidrs" {
+  type        = list(string)
+  default     = null
+  description = "List of CIDR ranges for services when using multiple service CIDRs"
+}
+
+variable "ip_versions" {
+  type        = list(string)
+  default     = null
+  description = "IP versions to use for the cluster network. Possible values are IPv4 and IPv6"
+}
+
+variable "nat_gateway_profile" {
+  type = object({
+    idle_timeout_in_minutes   = number
+    managed_outbound_ip_count = number
+  })
+  default     = null
+  description = "NAT Gateway profile configuration for managing outbound connectivity with idle timeout and IP count"
+}
+
+variable "advanced_networking" {
+  type = object({
+    observability_enabled = bool
+    security_enabled      = bool
+  })
+  default     = null
+  description = "Advanced networking configuration to enable observability and security features for the cluster"
+}
+
+
+variable "gateway_id" {
+  description = "ID of an existing Application Gateway to integrate with AKS (BYO App Gateway)."
+  type        = string
+  default     = null
+}
+
+variable "gateway_name" {
+  description = "Name of the Application Gateway to be created by AKS when gateway_id is not provided."
+  type        = string
+  default     = null
+}
+
+variable "subnet_id" {
+  description = "Subnet ID for the Application Gateway (required when AKS creates the gateway)."
+  type        = string
+  default     = null
+}
+
+variable "subnet_cidr" {
+  description = "Subnet CIDR for the Application Gateway (used when subnet_id is not provided)."
+  type        = string
+  default     = null
+}
+
+variable "upgrade_override" {
+  type = object({
+    force_upgrade_enabled = bool
+    effective_until       = string
+  })
+  default     = null
+  description = "Upgrade override configuration to force cluster upgrades until a specified date/time"
+}
+
+variable "use_existing_appgw" {
+  description = "True if using an existing (BYO) Application Gateway via gateway_id."
+  type        = bool
+  default     = false
+}
 ##-----------------------------------------------------------------------------
 ## Storage Configuration
 ##-----------------------------------------------------------------------------
@@ -1087,4 +1321,123 @@ variable "kms_key_vault_network_access" {
     condition     = contains(["Private", "Public"], var.kms_key_vault_network_access)
     error_message = "Possible values are `Private` and `Public`"
   }
+}
+
+##-----------------------------------------------------------------------------
+## AKS Backup Configuration
+##-----------------------------------------------------------------------------
+variable "enable_backup" {
+  type        = bool
+  default     = false
+  description = "This enables the aks backup Vault"
+}
+
+variable "vault_datastore_type" {
+  type        = string
+  default     = "VaultStore"
+  description = "(Required) Specifies the type of the data store. Possible values are ArchiveStore, OperationalStore, SnapshotStore and VaultStore. Changing this forces a new resource to be created."
+}
+
+variable "aks_backup_redundancy" {
+  type        = string
+  default     = "LocallyRedundant"
+  description = "(Required) Specifies the backup storage redundancy. Possible values are GeoRedundant, LocallyRedundant and ZoneRedundant. Changing this forces a new Backup Vault to be created."
+}
+
+variable "retention_rules" {
+  type = list(object({
+    name     = string
+    priority = number
+    life_cycle = object({
+      duration        = string
+      data_store_type = string
+    })
+    criteria = object({
+      absolute_criteria      = optional(string)
+      days_of_week           = optional(list(string))
+      months_of_year         = optional(list(string))
+      weeks_of_month         = optional(list(string))
+      scheduled_backup_times = optional(list(string))
+    })
+  }))
+  default     = []
+  description = "List of retention rules with lifecycle and criteria details."
+}
+
+variable "default_retention_rules" {
+  type = map(object({
+    duration        = string
+    data_store_type = string
+  }))
+  default = {
+    default = {
+      duration        = "P7D"
+      data_store_type = "OperationalStore"
+    }
+  }
+  description = "Map of retention rules with their lifecycle configurations"
+}
+
+variable "backup_datasource_parameters" {
+  type = object({
+    excluded_namespaces              = optional(list(string))
+    excluded_resource_types          = optional(list(string))
+    cluster_scoped_resources_enabled = bool
+    included_namespaces              = list(string)
+    included_resource_types          = optional(list(string))
+    label_selectors                  = optional(list(string))
+    volume_snapshot_enabled          = bool
+  })
+  default = {
+    excluded_namespaces              = null
+    included_namespaces              = null
+    included_resource_types          = null
+    excluded_resource_types          = null
+    label_selectors                  = null
+    cluster_scoped_resources_enabled = false
+    volume_snapshot_enabled          = false
+  }
+  description = "Configuration parameters for backup datasource"
+}
+
+variable "release_train" {
+  type        = string
+  default     = "Stable"
+  description = "(Optional) The release train used by this extension. Possible values include but are not limited to Stable, Preview. Changing this forces a new Kubernetes Cluster Extension to be created."
+}
+
+variable "release_namespace" {
+  type        = string
+  default     = "dataprotection-microsoft"
+  description = "(Optional) Namespace where the extension release must be placed for a cluster scoped extension. If this namespace does not exist, it will be created."
+}
+
+variable "snapshot_resource_group_id" {
+  type        = string
+  default     = "null"
+  description = "(Required) The Id of the Resource Group where snapshots are stored."
+}
+
+variable "snapshot_resource_group_name" {
+  type        = string
+  default     = "null"
+  description = "(Required) The name of the Resource Group where snapshots are stored."
+}
+
+variable "backup_storage_account_id" {
+  type        = string
+  default     = null
+  description = "ID of the existing storage account for backup data. If null, a new storage account will be created."
+}
+
+variable "backup_storage_account_name" {
+  type        = string
+  default     = null
+  description = "Name of the storage account where backup data will be stored"
+}
+
+variable "backup_container_name" {
+  type        = string
+  default     = "backup"
+  description = "Name of the container within the storage account where backup data will be stored"
 }
