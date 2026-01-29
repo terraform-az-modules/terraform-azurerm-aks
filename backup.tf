@@ -60,8 +60,8 @@ resource "azurerm_kubernetes_cluster_extension" "backup_cluster_extension" {
   name              = format("%s-aks-backup-extension", module.labels.id)
   cluster_id        = azurerm_kubernetes_cluster.main[0].id
   extension_type    = "Microsoft.DataProtection.Kubernetes"
-  release_train     = var.release_train
-  release_namespace = var.release_namespace
+  release_train     = var.backup_release_train
+  release_namespace = var.backup_release_namespace
   configuration_settings = {
     "configuration.backupStorageLocation.bucket"                = var.backup_container_name
     "configuration.backupStorageLocation.config.resourceGroup"  = var.resource_group_name

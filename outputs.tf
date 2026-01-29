@@ -189,3 +189,53 @@ output "http_application_routing_zone_name" {
   description = "Zone name for HTTP Application Routing add-on, if enabled."
   value       = try(azurerm_kubernetes_cluster.main[0].http_application_routing_zone_name, null)
 }
+
+output "kubernetes_flux_configuration_id" {
+  description = "Kubernetes Flux Configuration ID"
+  value       = try(azurerm_kubernetes_flux_configuration.main[0].id, null)
+}
+
+output "kubernetes_fleet_update_strategy_id" {
+  description = "Kubernetes Fleet Update Strategy ID"
+  value       = try(azurerm_kubernetes_fleet_update_strategy.main[0].id, null)
+}
+
+output "kubernetes_fleet_update_run_id" {
+  description = "Kubernetes Fleet Update Run ID"
+  value       = try(azurerm_kubernetes_fleet_update_run.main[0].id, null)
+}
+
+output "kubernetes_fleet_member_id" {
+  description = "Kubernetes Fleet Member ID"
+  value       = try(azurerm_kubernetes_fleet_member.main[0].id, null)
+}
+
+output "kubernetes_fleet_manager_id" {
+  description = "Kubernetes Fleet Manager ID"
+  value       = try(azurerm_kubernetes_fleet_manager.main[0].id, null)
+}
+
+output "kubernetes_cluster_extension_id" {
+  description = "Kubernetes Cluster Extension ID"
+  value       = try(azurerm_kubernetes_cluster_extension.main[0].id, null)
+}
+
+output "kubernetes_cluster_extension_current_version" {
+  description = "Current version of Kubernetes Cluster Extension"
+  value       = try(azurerm_kubernetes_cluster_extension.main[0].current_version, null)
+}
+
+output "kubernetes_cluster_extension_identity_type" {
+  description = "Identity type of Kubernetes Cluster Extension"
+  value       = try(azurerm_kubernetes_cluster_extension.main[0].aks_assigned_identity[0].type, null)
+}
+
+output "kubernetes_cluster_extension_principal_id" {
+  description = "Principal ID of Kubernetes Cluster Extension managed identity"
+  value       = try(azurerm_kubernetes_cluster_extension.main[0].aks_assigned_identity[0].principal_id, null)
+}
+
+output "kubernetes_cluster_extension_tenant_id" {
+  description = "Tenant ID of Kubernetes Cluster Extension managed identity"
+  value       = try(azurerm_kubernetes_cluster_extension.main[0].aks_assigned_identity[0].tenant_id, null)
+}

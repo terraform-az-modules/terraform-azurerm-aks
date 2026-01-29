@@ -189,3 +189,53 @@ output "http_application_routing_zone_name" {
   value       = module.aks.http_application_routing_zone_name
   description = "Zone name for HTTP Application Routing add-on, if enabled."
 }
+
+output "kubernetes_flux_configuration_id" {
+  description = "Kubernetes Flux Configuration ID"
+  value       = module.aks.kubernetes_flux_configuration_id
+}
+
+output "kubernetes_fleet_update_strategy_id" {
+  description = "Kubernetes Fleet Update Strategy ID"
+  value       = module.aks.kubernetes_fleet_update_strategy_id
+}
+
+output "kubernetes_fleet_update_run_id" {
+  description = "Kubernetes Fleet Update Run ID"
+  value       = module.aks.kubernetes_fleet_update_run_id
+}
+
+output "kubernetes_fleet_member_id" {
+  description = "Kubernetes Fleet Member ID"
+  value       = module.aks.kubernetes_fleet_member_id
+}
+
+output "kubernetes_fleet_manager_id" {
+  description = "Kubernetes Fleet Manager ID"
+  value       = module.aks.kubernetes_fleet_manager_id
+}
+
+output "kubernetes_cluster_extension_id" {
+  description = "Kubernetes Cluster Extension ID"
+  value       = module.aks.kubernetes_cluster_extension_id
+}
+
+output "kubernetes_cluster_extension_current_version" {
+  description = "Current version of Kubernetes Cluster Extension"
+  value       = module.aks.kubernetes_cluster_extension_current_version
+}
+
+output "kubernetes_cluster_extension_identity_type" {
+  description = "Identity type of Kubernetes Cluster Extension"
+  value       = module.aks.kubernetes_cluster_extension_identity_type
+}
+
+output "kubernetes_cluster_extension_principal_id" {
+  description = "Principal ID of Kubernetes Cluster Extension managed identity"
+  value       = module.aks.kubernetes_cluster_extension_principal_id
+}
+
+output "kubernetes_cluster_extension_tenant_id" {
+  description = "Tenant ID of Kubernetes Cluster Extension managed identity"
+  value       = module.aks.kubernetes_cluster_extension_tenant_id
+}

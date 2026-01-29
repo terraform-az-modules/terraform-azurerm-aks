@@ -144,9 +144,28 @@ module "aks" {
       enable_auto_scaling = true
     }
   }
-  key_vault_id               = module.vault.id
-  admin_objects_ids          = [data.azurerm_client_config.current_client_config.object_id]
-  microsoft_defender_enabled = false
-  diagnostic_setting_enable  = false
-  log_analytics_workspace_id = module.log-analytics.workspace_id
+  key_vault_id                 = module.vault.id
+  admin_objects_ids            = [data.azurerm_client_config.current_client_config.object_id]
+  microsoft_defender_enabled   = false
+  diagnostic_setting_enable    = false
+  enable_extensions            = true
+  enable_fleet_manager         = true
+  enable_fleet_update_strategy = true
+  enable_fleet_update_run      = true
+  configuration_settings = {
+    "helm-controller.enabled"   = "true"
+    "source-controller.enabled" = "true"
+  }
+  fleet_member_group = "production"
+  fleet_update_strategy_stages = [
+    {
+      name                        = "stage-1"
+      groups                      = ["production"]
+      after_stage_wait_in_seconds = 0
+    }
+  ]
+
+  fleet_upgrade_type               = "Full"
+  fleet_upgrade_kubernetes_version = "1.34.0"
+  fleet_node_image_selection_type  = "Latest"
 }

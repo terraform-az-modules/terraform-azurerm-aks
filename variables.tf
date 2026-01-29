@@ -704,6 +704,18 @@ variable "auto_scaler_profile" {
   description = "Cluster autoscaler profile configuration"
 }
 
+variable "node_provisioning_mode" {
+  description = "Provisioning mode for AKS node pools"
+  type        = string
+  default     = "Manual" # Safe default
+}
+
+variable "node_provisioning_default_node_pools" {
+  description = "Whether default node pools should be provisioned automatically"
+  type        = string
+  default     = "Auto"
+}
+
 variable "workload_autoscaler_profile" {
   type = object({
     keda_enabled                    = optional(bool, false)
@@ -1414,13 +1426,13 @@ variable "backup_datasource_parameters" {
   description = "Configuration parameters for backup datasource"
 }
 
-variable "release_train" {
+variable "backup_release_train" {
   type        = string
   default     = "Stable"
   description = "(Optional) The release train used by this extension. Possible values include but are not limited to Stable, Preview. Changing this forces a new Kubernetes Cluster Extension to be created."
 }
 
-variable "release_namespace" {
+variable "backup_release_namespace" {
   type        = string
   default     = "dataprotection-microsoft"
   description = "(Optional) Namespace where the extension release must be placed for a cluster scoped extension. If this namespace does not exist, it will be created."
@@ -1454,4 +1466,271 @@ variable "backup_container_name" {
   type        = string
   default     = "backup"
   description = "Name of the container within the storage account where backup data will be stored"
+}
+
+##-----------------------------------------------------------------------------
+## Extensions
+##-----------------------------------------------------------------------------
+variable "enable_extensions" {
+  type        = bool
+  description = "Enable Kubernetes cluster extensions"
+  default     = false
+}
+
+variable "extension_type" {
+  type        = string
+  description = "Type of the Kubernetes cluster extension (e.g., microsoft.flux, microsoft.dapr, microsoft.azuremonitor.containers)"
+  default     = "microsoft.flux"
+}
+
+variable "configuration_settings" {
+  type        = map(string)
+  description = "Configuration settings for the extension as key-value pairs"
+  default     = {}
+}
+
+variable "configuration_protected_settings" {
+  type        = map(string)
+  description = "Protected/sensitive configuration settings for the extension"
+  sensitive   = true
+  default     = {}
+}
+
+variable "enable_plan" {
+  type        = bool
+  description = "Enable marketplace plan configuration for the extension"
+  default     = false
+}
+
+variable "plan_config" {
+  type = object({
+    name           = string
+    product        = string
+    publisher      = string
+    promotion_code = optional(string)
+    version        = optional(string)
+  })
+  description = "Marketplace plan configuration object containing name, product, publisher and optional promotion_code and version"
+  default     = null
+}
+
+variable "release_train" {
+  type        = string
+  description = "Release train for the extension (Stable or Preview)"
+  default     = "Stable"
+  validation {
+    condition     = var.release_train == null || contains(["Stable", "Preview"], var.release_train)
+    error_message = "release_train must be either 'Stable' or 'Preview' or null"
+  }
+}
+
+variable "release_namespace" {
+  type        = string
+  description = "Namespace where the extension release resources will be created"
+  default     = null
+}
+
+variable "target_namespace" {
+  type        = string
+  description = "Target namespace where the extension will be deployed"
+  default     = null
+}
+
+variable "extension_version" {
+  type        = string
+  description = "Version of the extension to install. If not specified, latest version will be used"
+  default     = null
+}
+
+##-----------------------------------------------------------------------------
+## Kubernetes Fleet Manager
+##-----------------------------------------------------------------------------
+variable "enable_fleet_manager" {
+  type        = bool
+  description = "Enable Kubernetes Fleet Manager for multi-cluster management"
+  default     = false
+}
+
+variable "fleet_member_group" {
+  type        = string
+  description = "The group this member belongs to for orchestration. Used for update runs and other operations"
+  default     = null
+}
+
+variable "enable_fleet_update_strategy" {
+  type        = bool
+  description = "Enable Fleet Update Strategy for reusable update orchestration patterns"
+  default     = false
+}
+
+variable "fleet_update_strategy_stages" {
+  type = list(object({
+    name                        = string
+    groups                      = list(string)
+    after_stage_wait_in_seconds = optional(number)
+  }))
+  description = "List of update strategy stages with groups and wait times"
+  default     = []
+}
+
+variable "enable_fleet_update_run" {
+  type        = bool
+  description = "Enable Fleet Update Run for orchestrated cluster updates"
+  default     = false
+}
+
+variable "fleet_upgrade_type" {
+  type        = string
+  description = "Type of upgrade: 'Full' or 'NodeImageOnly'"
+  default     = "Full"
+  validation {
+    condition     = contains(["Full", "NodeImageOnly"], var.fleet_upgrade_type)
+    error_message = "fleet_upgrade_type must be either 'Full' or 'NodeImageOnly'"
+  }
+}
+
+variable "fleet_upgrade_kubernetes_version" {
+  type        = string
+  description = "Kubernetes version to upgrade to (required when type is 'Full')"
+  default     = null
+}
+
+variable "fleet_node_image_selection_type" {
+  type        = string
+  description = "Node image selection type: 'Latest' or 'Consistent'"
+  default     = null
+}
+
+variable "fleet_update_stages" {
+  type = list(object({
+    name                        = string
+    groups                      = list(string)
+    after_stage_wait_in_seconds = optional(number)
+  }))
+  description = "Inline update stages (used only when fleet_update_strategy is disabled)"
+  default     = []
+}
+
+##-----------------------------------------------------------------------------
+## Kubernetes Flux Configuration
+##-----------------------------------------------------------------------------
+variable "enable_flux_configuration" {
+  type        = bool
+  description = "Enable Flux GitOps configuration for the AKS cluster"
+  default     = false
+}
+
+variable "flux_namespace" {
+  type        = string
+  description = "Namespace where Flux configuration will be installed"
+  default     = "flux-system"
+}
+
+variable "flux_scope" {
+  type        = string
+  description = "Scope of the Flux configuration: 'cluster' or 'namespace'"
+  default     = "cluster"
+  validation {
+    condition     = contains(["cluster", "namespace"], var.flux_scope)
+    error_message = "flux_scope must be either 'cluster' or 'namespace'"
+  }
+}
+
+variable "flux_continuous_reconciliation_enabled" {
+  type        = bool
+  description = "Enable continuous reconciliation for Flux configuration"
+  default     = true
+}
+
+variable "flux_kustomizations" {
+  type = list(object({
+    name                       = string
+    path                       = optional(string, "./")
+    timeout_in_seconds         = optional(number, 600)
+    sync_interval_in_seconds   = optional(number, 600)
+    retry_interval_in_seconds  = optional(number, 300)
+    recreating_enabled         = optional(bool, false)
+    garbage_collection_enabled = optional(bool, true)
+    depends_on                 = optional(list(string), [])
+    wait                       = optional(bool, true)
+    post_build = optional(object({
+      substitute = optional(map(string))
+      substitute_from = optional(list(object({
+        kind     = string
+        name     = string
+        optional = optional(bool)
+      })))
+    }))
+  }))
+  description = "List of Flux Kustomizations (required when enable_flux_configuration is true)"
+  default = [
+    {
+      name = "default"
+      path = "./"
+    }
+  ]
+}
+
+##-----------------------------------------------------------------------------
+## Flux Source Configuration (Choose one: git_repository, bucket, or blob_storage)
+##-----------------------------------------------------------------------------
+variable "flux_git_repository" {
+  type = object({
+    url                      = string
+    reference_type           = string
+    reference_value          = string
+    https_ca_cert_base64     = optional(string)
+    https_user               = optional(string)
+    https_key_base64         = optional(string)
+    provider                 = optional(string)
+    local_auth_reference     = optional(string)
+    ssh_private_key_base64   = optional(string)
+    ssh_known_hosts_base64   = optional(string)
+    sync_interval_in_seconds = optional(number)
+    timeout_in_seconds       = optional(number)
+  })
+  description = "Git repository configuration for Flux source"
+  sensitive   = true
+  default     = null
+}
+
+variable "flux_bucket" {
+  type = object({
+    bucket_name              = string
+    url                      = string
+    access_key               = optional(string)
+    secret_key_base64        = optional(string)
+    tls_enabled              = optional(bool, true)
+    local_auth_reference     = optional(string)
+    sync_interval_in_seconds = optional(number)
+    timeout_in_seconds       = optional(number)
+  })
+  description = "S3-compatible bucket configuration for Flux source"
+  sensitive   = true
+  default     = null
+}
+
+variable "flux_blob_storage" {
+  type = object({
+    container_id             = string
+    account_key              = optional(string)
+    local_auth_reference     = optional(string)
+    sas_token                = optional(string)
+    sync_interval_in_seconds = optional(number)
+    timeout_in_seconds       = optional(number)
+    managed_identity = optional(object({
+      client_id = string
+    }))
+    service_principal = optional(object({
+      client_id                     = string
+      tenant_id                     = string
+      client_certificate_base64     = optional(string)
+      client_certificate_password   = optional(string)
+      client_certificate_send_chain = optional(bool)
+      client_secret                 = optional(string)
+    }))
+  })
+  description = "Azure Blob Storage configuration for Flux source"
+  sensitive   = true
+  default     = null
 }

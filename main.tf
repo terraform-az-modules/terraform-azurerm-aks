@@ -55,6 +55,10 @@ resource "azurerm_kubernetes_cluster" "main" {
       container_registry_id = bootstrap_profile.value.container_registry_id
     }
   }
+  node_provisioning_profile {
+    mode               = var.node_provisioning_mode
+    default_node_pools = var.node_provisioning_default_node_pools
+  }
   dynamic "monitor_metrics" {
     for_each = var.monitor_metrics == null ? [] : [var.monitor_metrics]
 
@@ -488,4 +492,195 @@ resource "azurerm_disk_encryption_set" "main" {
   identity {
     type = "SystemAssigned"
   }
+}
+
+resource "azurerm_kubernetes_cluster_extension" "main" {
+  count                            = var.enable && var.enable_extensions ? 1 : 0
+  name                             = var.resource_position_prefix ? format("aks-extension-%s", local.name) : format("%s-aks-extension", local.name)
+  cluster_id                       = azurerm_kubernetes_cluster.main[0].id
+  extension_type                   = var.extension_type
+  configuration_settings           = var.configuration_settings
+  configuration_protected_settings = var.configuration_protected_settings
+  dynamic "plan" {
+    for_each = var.enable_plan && var.plan_config != null ? [var.plan_config] : []
+    content {
+      name           = plan.value.name
+      product        = plan.value.product
+      publisher      = plan.value.publisher
+      promotion_code = plan.value.promotion_code
+      version        = plan.value.version
+    }
+  }
+  release_train     = var.release_train
+  release_namespace = var.release_namespace
+  target_namespace  = var.target_namespace
+  version           = var.extension_version
+}
+
+resource "azurerm_kubernetes_fleet_manager" "main" {
+  count               = var.enable && var.enable_fleet_manager ? 1 : 0
+  name                = var.resource_position_prefix ? format("aks-fleet-%s", local.name) : format("%s-aks-fleet", local.name)
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  tags                = module.labels.tags
+}
+
+resource "azurerm_kubernetes_fleet_member" "main" {
+  depends_on            = [azurerm_kubernetes_fleet_manager.main[0]]
+  count                 = var.enable && var.enable_fleet_manager ? 1 : 0
+  name                  = var.resource_position_prefix ? format("aks-fleet-member-%s", local.name) : format("%s-aks-fleet-member", local.name)
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.main[0].id
+  kubernetes_fleet_id   = azurerm_kubernetes_fleet_manager.main[0].id
+  group                 = var.fleet_member_group
+}
+
+resource "azurerm_kubernetes_fleet_update_run" "main" {
+  depends_on                  = [azurerm_kubernetes_fleet_update_strategy.main[0]]
+  count                       = var.enable && var.enable_fleet_manager && var.enable_fleet_update_run ? 1 : 0
+  name                        = var.resource_position_prefix ? format("aks-fleet-update-%s", local.name) : format("%s-aks-fleet-update", local.name)
+  kubernetes_fleet_manager_id = azurerm_kubernetes_fleet_manager.main[0].id
+  fleet_update_strategy_id    = var.enable_fleet_update_strategy ? azurerm_kubernetes_fleet_update_strategy.main[0].id : null
+  managed_cluster_update {
+    upgrade {
+      type               = var.fleet_upgrade_type
+      kubernetes_version = var.fleet_upgrade_kubernetes_version
+    }
+    dynamic "node_image_selection" {
+      for_each = var.fleet_node_image_selection_type != null ? [1] : []
+      content {
+        type = var.fleet_node_image_selection_type
+      }
+    }
+  }
+  dynamic "stage" {
+    for_each = var.enable_fleet_update_strategy ? [] : var.fleet_update_stages
+    content {
+      name = stage.value.name
+
+      dynamic "group" {
+        for_each = stage.value.groups
+        content {
+          name = group.value
+        }
+      }
+      after_stage_wait_in_seconds = stage.value.after_stage_wait_in_seconds
+    }
+  }
+}
+
+resource "azurerm_kubernetes_fleet_update_strategy" "main" {
+  count                       = var.enable && var.enable_fleet_manager && var.enable_fleet_update_strategy ? 1 : 0
+  name                        = var.resource_position_prefix ? format("aks-fleet-strategy-%s", local.name) : format("%s-aks-fleet-strategy", local.name)
+  kubernetes_fleet_manager_id = azurerm_kubernetes_fleet_manager.main[0].id
+  dynamic "stage" {
+    for_each = var.fleet_update_strategy_stages
+    content {
+      name = stage.value.name
+      dynamic "group" {
+        for_each = stage.value.groups
+        content {
+          name = group.value
+        }
+      }
+      after_stage_wait_in_seconds = stage.value.after_stage_wait_in_seconds
+    }
+  }
+}
+
+resource "azurerm_kubernetes_flux_configuration" "main" {
+  count      = var.enable && var.enable_flux_configuration ? 1 : 0
+  name       = var.resource_position_prefix ? format("aks-flux-%s", local.name) : format("%s-aks-flux", local.name)
+  cluster_id = azurerm_kubernetes_cluster.main[0].id
+  namespace  = var.flux_namespace
+  dynamic "kustomizations" {
+    for_each = var.flux_kustomizations
+    content {
+      name                       = kustomizations.value.name
+      path                       = kustomizations.value.path
+      timeout_in_seconds         = kustomizations.value.timeout_in_seconds
+      sync_interval_in_seconds   = kustomizations.value.sync_interval_in_seconds
+      retry_interval_in_seconds  = kustomizations.value.retry_interval_in_seconds
+      recreating_enabled         = kustomizations.value.recreating_enabled
+      garbage_collection_enabled = kustomizations.value.garbage_collection_enabled
+      depends_on                 = kustomizations.value.depends_on
+      wait                       = kustomizations.value.wait
+      dynamic "post_build" {
+        for_each = kustomizations.value.post_build != null ? [kustomizations.value.post_build] : []
+        content {
+          substitute = try(post_build.value.substitute, null)
+
+          dynamic "substitute_from" {
+            for_each = try(post_build.value.substitute_from, [])
+            content {
+              kind     = substitute_from.value.kind
+              name     = substitute_from.value.name
+              optional = try(substitute_from.value.optional, null)
+            }
+          }
+        }
+      }
+    }
+  }
+  dynamic "git_repository" {
+    for_each = var.flux_git_repository != null ? [var.flux_git_repository] : []
+    content {
+      url                      = git_repository.value.url
+      reference_type           = git_repository.value.reference_type
+      reference_value          = git_repository.value.reference_value
+      https_ca_cert_base64     = try(git_repository.value.https_ca_cert_base64, null)
+      https_user               = try(git_repository.value.https_user, null)
+      https_key_base64         = try(git_repository.value.https_key_base64, null)
+      provider                 = try(git_repository.value.provider, null)
+      local_auth_reference     = try(git_repository.value.local_auth_reference, null)
+      ssh_private_key_base64   = try(git_repository.value.ssh_private_key_base64, null)
+      ssh_known_hosts_base64   = try(git_repository.value.ssh_known_hosts_base64, null)
+      sync_interval_in_seconds = try(git_repository.value.sync_interval_in_seconds, null)
+      timeout_in_seconds       = try(git_repository.value.timeout_in_seconds, null)
+    }
+  }
+  dynamic "bucket" {
+    for_each = var.flux_bucket != null ? [var.flux_bucket] : []
+    content {
+      bucket_name              = bucket.value.bucket_name
+      url                      = bucket.value.url
+      access_key               = try(bucket.value.access_key, null)
+      secret_key_base64        = try(bucket.value.secret_key_base64, null)
+      tls_enabled              = try(bucket.value.tls_enabled, true)
+      local_auth_reference     = try(bucket.value.local_auth_reference, null)
+      sync_interval_in_seconds = try(bucket.value.sync_interval_in_seconds, null)
+      timeout_in_seconds       = try(bucket.value.timeout_in_seconds, null)
+    }
+  }
+  dynamic "blob_storage" {
+    for_each = var.flux_blob_storage != null ? [var.flux_blob_storage] : []
+    content {
+      container_id             = blob_storage.value.container_id
+      account_key              = try(blob_storage.value.account_key, null)
+      local_auth_reference     = try(blob_storage.value.local_auth_reference, null)
+      sas_token                = try(blob_storage.value.sas_token, null)
+      sync_interval_in_seconds = try(blob_storage.value.sync_interval_in_seconds, null)
+      timeout_in_seconds       = try(blob_storage.value.timeout_in_seconds, null)
+      dynamic "managed_identity" {
+        for_each = try(blob_storage.value.managed_identity, null) != null ? [blob_storage.value.managed_identity] : []
+        content {
+          client_id = managed_identity.value.client_id
+        }
+      }
+      dynamic "service_principal" {
+        for_each = try(blob_storage.value.service_principal, null) != null ? [blob_storage.value.service_principal] : []
+        content {
+          client_id                     = service_principal.value.client_id
+          tenant_id                     = service_principal.value.tenant_id
+          client_certificate_base64     = try(service_principal.value.client_certificate_base64, null)
+          client_certificate_password   = try(service_principal.value.client_certificate_password, null)
+          client_certificate_send_chain = try(service_principal.value.client_certificate_send_chain, null)
+          client_secret                 = try(service_principal.value.client_secret, null)
+        }
+      }
+    }
+  }
+
+  scope                             = var.flux_scope
+  continuous_reconciliation_enabled = var.flux_continuous_reconciliation_enabled
+  depends_on                        = [azurerm_kubernetes_cluster_extension.main]
 }
