@@ -1,3 +1,5 @@
+data "azurerm_client_config" "current" {}
+
 provider "azurerm" {
   features {}
 }
@@ -130,7 +132,7 @@ module "aks" {
   admin_group_id         = ["***ed"]
   role_based_access_control = [{
     managed   = true
-    tenant_id = "b****f7bdd" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
+    tenant_id = data.azurerm_client_config.current.tenant_id ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
     #admin_group_object_ids = ["*****-b3da-46c5-b672-fbc9bf0b****"] ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
     azure_rbac_enabled = true
   }]
