@@ -1,3 +1,5 @@
+data "azurerm_client_config" "current" {}
+
 ##-----------------------------------------------------------------------------
 ## Provider
 ##-----------------------------------------------------------------------------
@@ -143,7 +145,7 @@ module "aks" {
 
   role_based_access_control = [{
     managed            = true
-    tenant_id          = "<YOUR_TENANT_ID>" # Required when azure_rbac_enabled = true
+    tenant_id = data.azurerm_client_config.current.tenant_id # Required when azure_rbac_enabled = true
     azure_rbac_enabled = true               # Use Azure RBAC for Kubernetes authorization
   }]
 
