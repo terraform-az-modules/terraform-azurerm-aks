@@ -1,11 +1,29 @@
 name: tfsec
-permissions: write-all
+
 on:
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   tfsec:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tfsec.yml@1.2.1
-    secrets: inherit
-    with:
-      working_directory: '.'
+    name: tfsec SARIF report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run tfsec (SARIF)
+        uses: aquasecurity/tfsec-sarif-action@v0.1.4
+        with:
+          sarif_file: tfsec.sarif
+          working_directory: .
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: tfsec.sarif
