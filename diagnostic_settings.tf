@@ -18,10 +18,10 @@ resource "azurerm_monitor_diagnostic_setting" "diag" {
     }
   }
   dynamic "enabled_log" {
-    for_each = var.kv_logs.enabled ? var.kv_logs.category != null ? var.kv_logs.category : var.kv_logs.category_group : []
+    for_each = var.aks_logs.enabled ? var.aks_logs.category != null ? var.aks_logs.category : var.aks_logs.category_group : []
     content {
-      category       = var.kv_logs.category != null ? enabled_log.value : null
-      category_group = var.kv_logs.category == null ? enabled_log.value : null
+      category       = var.aks_logs.category != null ? enabled_log.value : null
+      category_group = var.aks_logs.category == null ? enabled_log.value : null
     }
   }
   lifecycle {
@@ -74,10 +74,10 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_diag" {
     }
   }
   dynamic "enabled_log" {
-    for_each = var.kv_logs.enabled ? var.kv_logs.category != null ? var.kv_logs.category : var.kv_logs.category_group : []
+    for_each = var.aks_logs.enabled ? var.aks_logs.category != null ? var.aks_logs.category : var.aks_logs.category_group : []
     content {
-      category       = var.kv_logs.category != null ? enabled_log.value : null
-      category_group = var.kv_logs.category == null ? enabled_log.value : null
+      category       = var.aks_logs.category != null ? enabled_log.value : null
+      category_group = var.aks_logs.category == null ? enabled_log.value : null
     }
   }
 

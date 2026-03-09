@@ -102,7 +102,6 @@ module "vault" {
   version                       = "1.0.1"
   name                          = "core"
   environment                   = "dev"
-  custom_name                   = "dahibadewihchole"
   label_order                   = ["name", "environment", "location"]
   resource_group_name           = module.resource_group.resource_group_name
   location                      = module.resource_group.resource_group_location

@@ -99,6 +99,9 @@ module "private_dns_zone" {
   ]
 }
 
+##-----------------------------------------------------------------------------
+## Storage Account
+##-----------------------------------------------------------------------------
 module "storage" {
   source                        = "terraform-az-modules/storage/azurerm"
   version                       = "1.0.0"

@@ -1,7 +1,9 @@
-#---------------------------AKS backup----------------------------------------
+##----------------------------------------------------------------------------- 
+## AKS Backup
+##-----------------------------------------------------------------------------
 
 resource "azurerm_data_protection_backup_vault" "backup_vault" {
-  count               = var.enable && var.enable_backup == true ? 1 : 0
+  count               = var.enable && var.enable_backup ? 1 : 0
   name                = var.resource_position_prefix ? format("aks-backup-vault-%s", local.name) : format("%s-aks-backup-vault", local.name)
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -13,11 +15,11 @@ resource "azurerm_data_protection_backup_vault" "backup_vault" {
 }
 
 resource "azurerm_data_protection_backup_policy_kubernetes_cluster" "backup_policy" {
-  count                           = var.enable && var.enable_backup == true ? 1 : 0
+  count                           = var.enable && var.enable_backup ? 1 : 0
   name                            = var.resource_position_prefix ? format("aks-backup-policy-%s", local.name) : format("%s-aks-backup-policy", local.name)
   vault_name                      = azurerm_data_protection_backup_vault.backup_vault[0].name
   resource_group_name             = var.resource_group_name
-  backup_repeating_time_intervals = ["R/2026-01-26T00:00:00Z/P1D"]
+  backup_repeating_time_intervals = var.backup_repeating_time_intervals
   dynamic "retention_rule" {
     for_each = var.retention_rules
     content {
@@ -48,7 +50,7 @@ resource "azurerm_data_protection_backup_policy_kubernetes_cluster" "backup_poli
 }
 
 resource "azurerm_kubernetes_cluster_trusted_access_role_binding" "aks_cluster_trusted_access" {
-  count                 = var.enable && var.enable_backup == true ? 1 : 0
+  count                 = var.enable && var.enable_backup ? 1 : 0
   kubernetes_cluster_id = azurerm_kubernetes_cluster.main[0].id
   name                  = var.resource_position_prefix ? format("backup-rb-%s", local.name) : format("%s-backup-rb", local.name)
   roles                 = ["Microsoft.DataProtection/backupVaults/backup-operator"]
@@ -71,8 +73,8 @@ resource "azurerm_kubernetes_cluster_extension" "backup_cluster_extension" {
   }
 }
 
-resource "azurerm_data_protection_backup_instance_kubernetes_cluster" "example" {
-  count                        = var.enable && var.enable_backup == true ? 1 : 0
+resource "azurerm_data_protection_backup_instance_kubernetes_cluster" "main" {
+  count                        = var.enable && var.enable_backup ? 1 : 0
   name                         = var.resource_position_prefix ? format("aks-backup-instance-cluster-%s", local.name) : format("%s-aks-backup-instance-cluster", local.name)
   location                     = var.location
   vault_id                     = azurerm_data_protection_backup_vault.backup_vault[0].id
@@ -89,12 +91,12 @@ resource "azurerm_data_protection_backup_instance_kubernetes_cluster" "example" 
     volume_snapshot_enabled          = var.backup_datasource_parameters.volume_snapshot_enabled
   }
   depends_on = [
-    azurerm_role_assignment.test_extension_and_storage_account_permission,
-    azurerm_role_assignment.test_vault_msi_read_on_cluster,
-    azurerm_role_assignment.test_vault_msi_read_on_snap_rg,
-    azurerm_role_assignment.test_cluster_msi_contributor_on_snap_rg,
-    azurerm_role_assignment.test_vault_msi_snapshot_contributor_on_snap_rg,
-    azurerm_role_assignment.test_vault_data_operator_on_snap_rg,
-    azurerm_role_assignment.test_vault_data_contributor_on_storage,
+    azurerm_role_assignment.extension_and_storage_account_permission,
+    azurerm_role_assignment.vault_msi_read_on_cluster,
+    azurerm_role_assignment.vault_msi_read_on_snap_rg,
+    azurerm_role_assignment.cluster_msi_contributor_on_snap_rg,
+    azurerm_role_assignment.vault_msi_snapshot_contributor_on_snap_rg,
+    azurerm_role_assignment.vault_data_operator_on_snap_rg,
+    azurerm_role_assignment.vault_data_contributor_on_storage,
   ]
 }

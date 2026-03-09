@@ -705,15 +705,15 @@ variable "auto_scaler_profile" {
 }
 
 variable "node_provisioning_mode" {
-  description = "Provisioning mode for AKS node pools"
   type        = string
-  default     = "Manual" # Safe default
+  default     = "Manual"
+  description = "Provisioning mode for AKS node pools"
 }
 
 variable "node_provisioning_default_node_pools" {
-  description = "Whether default node pools should be provisioned automatically"
   type        = string
   default     = "Auto"
+  description = "Whether default node pools should be provisioned automatically"
 }
 
 variable "workload_autoscaler_profile" {
@@ -1089,7 +1089,7 @@ variable "pip_logs" {
   description = "Configuration for Public IP diagnostic log settings. Specify log categories or category groups to collect"
 }
 
-variable "kv_logs" {
+variable "aks_logs" {
   type = object({
     enabled        = bool
     category       = optional(list(string))
@@ -1099,7 +1099,7 @@ variable "kv_logs" {
     enabled        = true
     category_group = ["AllLogs"]
   }
-  description = "Configuration for Key Vault diagnostic log settings. Specify log categories or category groups to collect"
+  description = "Configuration for AKS diagnostic log settings. Specify log categories or category groups to collect"
 }
 
 ##-----------------------------------------------------------------------------
@@ -1440,13 +1440,13 @@ variable "backup_release_namespace" {
 
 variable "snapshot_resource_group_id" {
   type        = string
-  default     = "null"
+  default     = null
   description = "(Required) The Id of the Resource Group where snapshots are stored."
 }
 
 variable "snapshot_resource_group_name" {
   type        = string
-  default     = "null"
+  default     = null
   description = "(Required) The name of the Resource Group where snapshots are stored."
 }
 
@@ -1467,6 +1467,13 @@ variable "backup_container_name" {
   default     = "backup"
   description = "Name of the container within the storage account where backup data will be stored"
 }
+
+variable "backup_repeating_time_intervals" {
+  type        = list(string)
+  description = "List of repeating time intervals for AKS backup in ISO 8601 format."
+  default     = ["R/2026-01-26T00:00:00Z/P1D"]
+}
+
 
 ##-----------------------------------------------------------------------------
 ## Extensions

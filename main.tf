@@ -535,7 +535,7 @@ resource "azurerm_kubernetes_fleet_member" "main" {
 }
 
 resource "azurerm_kubernetes_fleet_update_run" "main" {
-  depends_on                  = [azurerm_kubernetes_fleet_update_strategy.main[0]]
+  depends_on                  = [azurerm_kubernetes_fleet_update_strategy.main[0], azurerm_kubernetes_fleet_member.main[0]]
   count                       = var.enable && var.enable_fleet_manager && var.enable_fleet_update_run ? 1 : 0
   name                        = var.resource_position_prefix ? format("aks-fleet-update-%s", local.name) : format("%s-aks-fleet-update", local.name)
   kubernetes_fleet_manager_id = azurerm_kubernetes_fleet_manager.main[0].id

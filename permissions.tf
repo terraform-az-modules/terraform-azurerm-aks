@@ -80,7 +80,7 @@ resource "azurerm_role_assignment" "azurerm_disk_encryption_set_key_vault_access
   role_definition_name = "Key Vault Crypto Service Encryption User"
 }
 
-resource "azurerm_role_assignment" "example" {
+resource "azurerm_role_assignment" "user_auth_role_assignment" {
   for_each             = var.enable && var.aks_user_auth_role != null ? { for k in var.aks_user_auth_role : k.principal_id => k } : {}
   scope                = each.value.scope
   role_definition_name = each.value.role_definition_name
@@ -94,56 +94,56 @@ resource "azurerm_user_assigned_identity" "aks_user_assigned_identity" {
   location            = var.location
 }
 
-resource "azurerm_role_assignment" "test_extension_and_storage_account_permission" {
+resource "azurerm_role_assignment" "extension_and_storage_account_permission" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = var.backup_storage_account_id
   role_definition_name = "Storage Account Contributor"
   principal_id         = azurerm_kubernetes_cluster_extension.backup_cluster_extension[0].aks_assigned_identity[0].principal_id
 }
 
-resource "azurerm_role_assignment" "test_extension_and_storage_blob_data_permission" {
+resource "azurerm_role_assignment" "extension_and_storage_blob_data_permission" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = var.backup_storage_account_id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_kubernetes_cluster_extension.backup_cluster_extension[0].aks_assigned_identity[0].principal_id
 }
 
-resource "azurerm_role_assignment" "test_vault_msi_read_on_cluster" {
+resource "azurerm_role_assignment" "vault_msi_read_on_cluster" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = azurerm_kubernetes_cluster.main[0].id
   role_definition_name = "Reader"
   principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
 }
 
-resource "azurerm_role_assignment" "test_vault_msi_read_on_snap_rg" {
+resource "azurerm_role_assignment" "vault_msi_read_on_snap_rg" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = var.snapshot_resource_group_id
   role_definition_name = "Reader"
   principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
 }
 
-resource "azurerm_role_assignment" "test_vault_msi_snapshot_contributor_on_snap_rg" {
+resource "azurerm_role_assignment" "vault_msi_snapshot_contributor_on_snap_rg" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = var.snapshot_resource_group_id
   role_definition_name = "Disk Snapshot Contributor"
   principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
 }
 
-resource "azurerm_role_assignment" "test_vault_data_operator_on_snap_rg" {
+resource "azurerm_role_assignment" "vault_data_operator_on_snap_rg" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = var.snapshot_resource_group_id
   role_definition_name = "Data Operator for Managed Disks"
   principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
 }
 
-resource "azurerm_role_assignment" "test_vault_data_contributor_on_storage" {
+resource "azurerm_role_assignment" "vault_data_contributor_on_storage" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = var.backup_storage_account_id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_data_protection_backup_vault.backup_vault[0].identity[0].principal_id
 }
 
-resource "azurerm_role_assignment" "test_cluster_msi_contributor_on_snap_rg" {
+resource "azurerm_role_assignment" "cluster_msi_contributor_on_snap_rg" {
   count                = var.enable && var.enable_backup == true ? 1 : 0
   scope                = var.snapshot_resource_group_id
   role_definition_name = "Contributor"
