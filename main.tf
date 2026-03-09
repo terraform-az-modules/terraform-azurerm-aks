@@ -485,7 +485,7 @@ resource "azurerm_kubernetes_cluster" "main" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_disk_encryption_set" "main" {
   count               = var.enable && var.cmk_enabled ? 1 : 0
-  name                = var.resource_position_prefix ? format("aks-dsk-encrpted-%s", local.name) : format("%s-aks-dsk-encrpted", local.name)
+  name                = var.resource_position_prefix ? format("des-%s", local.name) : format("%s-des", local.name)
   resource_group_name = var.resource_group_name
   location            = var.location
   key_vault_key_id    = var.key_vault_id != null ? azurerm_key_vault_key.main[0].id : null
@@ -679,7 +679,6 @@ resource "azurerm_kubernetes_flux_configuration" "main" {
       }
     }
   }
-
   scope                             = var.flux_scope
   continuous_reconciliation_enabled = var.flux_continuous_reconciliation_enabled
   depends_on                        = [azurerm_kubernetes_cluster_extension.main]
