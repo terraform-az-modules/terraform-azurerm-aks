@@ -72,8 +72,8 @@ resource "azurerm_kubernetes_cluster_extension" "backup_cluster_extension" {
 }
 
 resource "azurerm_data_protection_backup_instance_kubernetes_cluster" "example" {
-  count = var.enable && var.enable_backup == true ? 1 : 0
-  name  = var.resource_position_prefix ? format("aks-backup-instance-cluster-%s", local.name) : format("%s-aks-backup-instance-cluster", local.name)
+  count                        = var.enable && var.enable_backup == true ? 1 : 0
+  name                         = var.resource_position_prefix ? format("aks-backup-instance-cluster-%s", local.name) : format("%s-aks-backup-instance-cluster", local.name)
   location                     = var.location
   vault_id                     = azurerm_data_protection_backup_vault.backup_vault[0].id
   kubernetes_cluster_id        = azurerm_kubernetes_cluster.main[0].id
