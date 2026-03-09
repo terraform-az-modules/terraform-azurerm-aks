@@ -2,7 +2,7 @@
 
 resource "azurerm_data_protection_backup_vault" "backup_vault" {
   count               = var.enable && var.enable_backup == true ? 1 : 0
-  name                = format("%s-aks-backup-vault", module.labels.id)
+  name                = var.resource_position_prefix ? format("aks-backup-vault-%s", local.name) : format("%s-aks-backup-vault", local.name)
   resource_group_name = var.resource_group_name
   location            = var.location
   datastore_type      = var.vault_datastore_type
@@ -57,7 +57,7 @@ resource "azurerm_kubernetes_cluster_trusted_access_role_binding" "aks_cluster_t
 
 resource "azurerm_kubernetes_cluster_extension" "backup_cluster_extension" {
   count             = var.enable && var.enable_backup ? 1 : 0
-  name              = format("%s-aks-backup-extension", module.labels.id)
+  name              = var.resource_position_prefix ? format("aks-backup-extension-%s", local.name) : format("%s-aks-backup-extension", local.name)
   cluster_id        = azurerm_kubernetes_cluster.main[0].id
   extension_type    = "Microsoft.DataProtection.Kubernetes"
   release_train     = var.backup_release_train
@@ -72,8 +72,8 @@ resource "azurerm_kubernetes_cluster_extension" "backup_cluster_extension" {
 }
 
 resource "azurerm_data_protection_backup_instance_kubernetes_cluster" "example" {
-  count                        = var.enable && var.enable_backup == true ? 1 : 0
-  name                         = var.resource_position_prefix ? format("aks-backup-instance-cluster-%s", local.name) : format("%s-aks-backup-instance-cluster", local.name)
+  count = var.enable && var.enable_backup == true ? 1 : 0
+  name  = var.resource_position_prefix ? format("aks-backup-instance-cluster-%s", local.name) : format("%s-aks-backup-instance-cluster", local.name)
   location                     = var.location
   vault_id                     = azurerm_data_protection_backup_vault.backup_vault[0].id
   kubernetes_cluster_id        = azurerm_kubernetes_cluster.main[0].id
