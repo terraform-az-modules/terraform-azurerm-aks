@@ -969,30 +969,6 @@ variable "ingress_application_gateway" {
   })
   default     = null
   description = "AGIC configuration for AKS. Use gateway_id for existing App Gateway, or gateway_name with subnet_id/subnet_cidr for AKS-managed gateway."
-  validation {
-    condition = (
-      var.ingress_application_gateway == null ||
-
-      (
-        var.ingress_application_gateway.gateway_id != null &&
-        var.ingress_application_gateway.gateway_name == null &&
-        var.ingress_application_gateway.subnet_id == null &&
-        var.ingress_application_gateway.subnet_cidr == null
-      ) ||
-
-      (
-        var.ingress_application_gateway.gateway_id == null &&
-        var.ingress_application_gateway.gateway_name != null &&
-        (
-          var.ingress_application_gateway.subnet_id != null ||
-          var.ingress_application_gateway.subnet_cidr != null
-        )
-      )
-    )
-
-    error_message = "Invalid ingress_application_gateway config. Use only gateway_id OR gateway_name with subnet_id/subnet_cidr."
-  }
-
 }
 
 ##-----------------------------------------------------------------------------
