@@ -89,7 +89,7 @@ resource "azurerm_role_assignment" "user_auth_role_assignment" {
 
 resource "azurerm_user_assigned_identity" "aks_user_assigned_identity" {
   count               = var.enable && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? 1 : 0
-  name                = var.resource_position_prefix ? format("aks-mid-%s", local.name) : format("%s-aks-mid", local.name)
+  name                = var.resource_position_prefix ? format("mid-aks-%s", local.name) : format("%s-aks-mid", local.name)
   resource_group_name = var.resource_group_name
   location            = var.location
 }

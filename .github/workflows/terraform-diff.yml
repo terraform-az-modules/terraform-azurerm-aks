@@ -7,7 +7,7 @@ on:
 jobs:
   public_cluster-example:
     if: github.actor != 'dependabot[bot]'
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yaml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yml@master
     with:
       provider: 'azurerm'
       terraform_directory: 'examples/public_cluster'
@@ -18,7 +18,7 @@ jobs:
 
   private_cluster-example:
     if: github.actor != 'dependabot[bot]'
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yaml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yml@master
     with:
       provider: 'azurerm'
       terraform_directory: 'examples/private_cluster'
@@ -29,7 +29,7 @@ jobs:
 
   aks_with_microsoft_entra_id-example:
     if: github.actor != 'dependabot[bot]'
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yaml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yml@master
     with:
       provider: 'azurerm'
       terraform_directory: 'examples/aks_with_microsoft_entra_id'
@@ -41,7 +41,7 @@ jobs:
 
   aks_with_ingress_controller-example:
     if: github.actor != 'dependabot[bot]'
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yaml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yml@master
     with:
       provider: 'azurerm'
       terraform_directory: 'examples/aks_with_ingress_controller'
@@ -53,7 +53,7 @@ jobs:
 
   aks_with_backup_enabled-example:
     if: github.actor != 'dependabot[bot]'
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yaml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yml@master
     with:
       provider: 'azurerm'
       terraform_directory: 'examples/aks_with_backup_enabled'
@@ -64,7 +64,7 @@ jobs:
 
   complete-example:
     if: github.actor != 'dependabot[bot]'
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yaml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-pr-checks.yml@master
     with:
       provider: 'azurerm'
       terraform_directory: 'examples/complete'
