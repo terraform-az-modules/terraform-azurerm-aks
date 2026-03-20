@@ -9,31 +9,37 @@ jobs:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/private_cluster/'
+      provider: azurerm
   
   public_cluster-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/public_cluster/'
+      provider: azurerm
   
   aks_with_microsoft_entra_id-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/aks_with_microsoft_entra_id/'
+      provider: azurerm
   
   aks_with_ingress_controller-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/aks_with_ingress_controller/'
+      provider: azurerm
   
   aks_with_backup_enabled-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/aks_with_backup_enabled/'
+      provider: azurerm
   
   complete-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/complete/'
+      provider: azurerm
 
   # TFLint Job
   tf-lint:
