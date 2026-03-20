@@ -120,7 +120,7 @@ variable "aks_sku_tier" {
 
 variable "dns_prefix" {
   type        = string
-  default     = "azure-kubernates"
+  default     = "azure-kubernetes"
   description = "DNS prefix for the AKS cluster. If null, will be auto-generated from cluster name"
 }
 

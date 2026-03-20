@@ -108,27 +108,3 @@ resource "azurerm_kubernetes_cluster_node_pool" "main" {
     outbound_nat_enabled = var.outbound_nat_enabled
   }
 }
-
-##-----------------------------------------------------------------------------
-## Key Vault Key for Encryption
-##-----------------------------------------------------------------------------
-resource "azurerm_key_vault_key" "main" {
-  depends_on      = [azurerm_role_assignment.rbac_keyvault_crypto_officer]
-  count           = var.enable && var.cmk_enabled ? 1 : 0
-  name            = var.resource_position_prefix ? format("aks-encrypted-key-%s", local.name) : format("%s-aks-encrypted-key", local.name)
-  expiration_date = var.expiration_date
-  key_vault_id    = var.key_vault_id
-  key_type        = var.cmk_key_type
-  key_size        = var.cmk_key_size
-  key_opts        = var.cmk_key_ops
-  dynamic "rotation_policy" {
-    for_each = var.rotation_policy_enabled ? var.rotation_policy : {}
-    content {
-      automatic {
-        time_before_expiry = rotation_policy.value.time_before_expiry
-      }
-      expire_after         = rotation_policy.value.expire_after
-      notify_before_expiry = rotation_policy.value.notify_before_expiry
-    }
-  }
-}

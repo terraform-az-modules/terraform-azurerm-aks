@@ -6,7 +6,7 @@ on:
 
 jobs:
   release:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tag-release.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/release-tag.yml@master
     with:
       target_branch: master
     secrets:

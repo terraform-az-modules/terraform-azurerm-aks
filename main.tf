@@ -481,11 +481,35 @@ resource "azurerm_kubernetes_cluster" "main" {
 }
 
 ##-----------------------------------------------------------------------------
+## Key Vault Key for Encryption
+##-----------------------------------------------------------------------------
+resource "azurerm_key_vault_key" "main" {
+  depends_on      = [azurerm_role_assignment.rbac_keyvault_crypto_officer]
+  count           = var.enable && var.cmk_enabled ? 1 : 0
+  name            = var.resource_position_prefix ? format("cmk-key-aks-%s", local.name) : format("%s-cmk-key-aks", local.name)
+  expiration_date = var.expiration_date
+  key_vault_id    = var.key_vault_id
+  key_type        = var.cmk_key_type
+  key_size        = var.cmk_key_size
+  key_opts        = var.cmk_key_ops
+  dynamic "rotation_policy" {
+    for_each = var.rotation_policy_enabled ? var.rotation_policy : {}
+    content {
+      automatic {
+        time_before_expiry = rotation_policy.value.time_before_expiry
+      }
+      expire_after         = rotation_policy.value.expire_after
+      notify_before_expiry = rotation_policy.value.notify_before_expiry
+    }
+  }
+}
+
+##-----------------------------------------------------------------------------
 ## Disk Encryption Set
 ##-----------------------------------------------------------------------------
 resource "azurerm_disk_encryption_set" "main" {
   count               = var.enable && var.cmk_enabled ? 1 : 0
-  name                = var.resource_position_prefix ? format("des-%s", local.name) : format("%s-des", local.name)
+  name                = var.resource_position_prefix ? format("des-aks-%s", local.name) : format("%s-des-aks", local.name)
   resource_group_name = var.resource_group_name
   location            = var.location
   key_vault_key_id    = var.key_vault_id != null ? azurerm_key_vault_key.main[0].id : null
