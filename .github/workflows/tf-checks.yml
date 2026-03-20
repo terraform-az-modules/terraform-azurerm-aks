@@ -5,6 +5,12 @@ on:
   pull_request:
   workflow_dispatch:
 jobs:
+  basic-example:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    with:
+      working_directory: './examples/basic/'
+      provider: none
+
   private_cluster-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
     with:
