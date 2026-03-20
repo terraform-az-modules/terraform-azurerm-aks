@@ -509,7 +509,7 @@ resource "azurerm_key_vault_key" "main" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_disk_encryption_set" "main" {
   count               = var.enable && var.cmk_enabled ? 1 : 0
-  name                = var.resource_position_prefix ? format("des-%s", local.name) : format("%s-des", local.name)
+  name                = var.resource_position_prefix ? format("des-aks-%s", local.name) : format("%s-des-aks", local.name)
   resource_group_name = var.resource_group_name
   location            = var.location
   key_vault_key_id    = var.key_vault_id != null ? azurerm_key_vault_key.main[0].id : null
