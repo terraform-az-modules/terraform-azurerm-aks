@@ -27,7 +27,7 @@ updates:
     # Add reviewer
     reviewers:
       - "approvers"
-      - "Crew"      
+      - "Crew"
     # Allow up to 3 open pull requests for pip dependencies
     open-pull-requests-limit: 3
 
