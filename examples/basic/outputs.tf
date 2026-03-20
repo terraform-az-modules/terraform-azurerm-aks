@@ -3,7 +3,7 @@ output "aks_id" {
   value       = module.aks.aks_id
 }
 
-output "aks_name" {
-  description = "The name of the AKS cluster"
-  value       = module.aks.aks_name
+output "fqdn" {
+  description = "The FQDN of the AKS cluster"
+  value       = module.aks.fqdn
 }
