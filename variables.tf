@@ -859,7 +859,7 @@ variable "microsoft_defender_enabled" {
 
 variable "oms_agent_enabled" {
   type        = bool
-  default     = false
+  default     = true
   description = "Enable Log Analytics (OMS agent) add-on."
 }
 
