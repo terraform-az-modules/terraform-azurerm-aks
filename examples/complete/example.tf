@@ -168,4 +168,6 @@ module "aks" {
   fleet_upgrade_type               = "Full"
   fleet_upgrade_kubernetes_version = "1.34.0"
   fleet_node_image_selection_type  = "Latest"
+
+  log_analytics_workspace_id = module.log-analytics.workspace_id
 }

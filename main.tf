@@ -26,7 +26,7 @@ resource "azurerm_kubernetes_cluster" "main" {
   kubernetes_version                  = var.kubernetes_version
   automatic_upgrade_channel           = var.automatic_channel_upgrade
   sku_tier                            = var.aks_sku_tier
-  node_resource_group                 = var.node_resource_group == null ? (var.resource_position_prefix ? format("aks-node-rg-%s", local.name) : format("%s-aks-node-rg", local.name)) : var.node_resource_group
+  node_resource_group                 = var.enable_default_node_rg_name ? null : (var.node_resource_group == null ? (var.resource_position_prefix ? format("rg-node-aks-%s", local.name) : format("%s-rg-node-aks", local.name)) : var.node_resource_group)
   disk_encryption_set_id              = var.key_vault_id != null ? azurerm_disk_encryption_set.main[0].id : null
   private_cluster_enabled             = var.private_cluster_enabled
   private_dns_zone_id                 = var.private_cluster_enabled ? var.private_dns_zone_id : null

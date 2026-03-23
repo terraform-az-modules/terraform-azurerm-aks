@@ -97,6 +97,12 @@ variable "kubernetes_version" {
   description = "Version of Kubernetes to deploy"
 }
 
+variable "enable_default_node_rg_name" {
+  type        = bool
+  default     = true
+  description = "When true, lets AKS auto-generate the node resource group name (MC_<rg>_<cluster>_<location>). When false, uses the custom naming pattern."
+}
+
 variable "node_resource_group" {
   type        = string
   default     = null
@@ -1221,7 +1227,7 @@ variable "rotation_policy" {
 
 variable "expiration_date" {
   type        = string
-  default     = "2026-09-17T23:59:59Z"
+  default     = null
   description = "Expiration UTC datetime (Y-m-d'T'H:M:S'Z')"
 }
 
