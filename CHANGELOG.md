@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.4] - 2026-03-23
+### :bug: Bug Fixes
+- [`4592775`](https://github.com/terraform-az-modules/terraform-azurerm-aks/commit/459277555dce2f7a68672c88ccc440cfbb3518f3) - Updated logic for node resource group name *(PR [#128](https://github.com/terraform-az-modules/terraform-azurerm-aks/pull/128) by [@maharshi-cd](https://github.com/maharshi-cd))*
+
+
 ## [1.0.2] - 2026-03-20
 
 ### Changes
@@ -35,3 +40,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Key Vault integration for secrets
 - RBAC and Microsoft Entra ID support
 - Backup and restore capabilities
+[v1.0.4]: https://github.com/terraform-az-modules/terraform-azurerm-aks/compare/v1.0.3...v1.0.4
