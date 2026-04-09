@@ -1,54 +1,54 @@
 name: tf-checks
+
 on:
-  push:
-    branches: [ master ]
   pull_request:
   workflow_dispatch:
+
 jobs:
   basic-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/stf-checks.yml@v2
     with:
       working_directory: './examples/basic/'
       provider: none
 
   private_cluster-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/stf-checks.yml@v2
     with:
       working_directory: './examples/private_cluster/'
       provider: none
 
   public_cluster-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/stf-checks.yml@v2
     with:
       working_directory: './examples/public_cluster/'
       provider: none
 
   aks_with_microsoft_entra_id-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/stf-checks.yml@v2
     with:
       working_directory: './examples/aks_with_microsoft_entra_id/'
       provider: none
 
   aks_with_ingress_controller-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/stf-checks.yml@v2
     with:
       working_directory: './examples/aks_with_ingress_controller/'
       provider: none
 
   aks_with_backup_enabled-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/stf-checks.yml@v2
     with:
       working_directory: './examples/aks_with_backup_enabled/'
       provider: none
 
   complete-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/stf-checks.yml@v2
     with:
       working_directory: './examples/complete/'
       provider: none
 
   # TFLint Job
   tf-lint:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-lint.yml@master
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-lint.yml@v2
     secrets:
       GITHUB: ${{ secrets.GITHUB }}
