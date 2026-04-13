@@ -22,16 +22,16 @@ data "azurerm_resources" "aks_pip" {
 data "azurerm_application_gateway" "appgw" {
   count               = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   name                = split("/", var.gateway_id)[8]
-  resource_group_name = var.resource_group_name
+  resource_group_name = coalesce(var.appgw_resource_group_name, var.resource_group_name)
 }
 
 data "azurerm_user_assigned_identity" "appgw_uami" {
   count               = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   name                = split("/", data.azurerm_application_gateway.appgw[0].identity[0].identity_ids[0])[8]
-  resource_group_name = var.resource_group_name
+  resource_group_name = coalesce(var.appgw_resource_group_name, var.resource_group_name)
 }
 
 data "azurerm_resource_group" "appgw_rg" {
   count = var.enable && var.enable_ingress_application_gateway ? 1 : 0
-  name  = try(var.resource_group_name)
+  name  = coalesce(var.appgw_resource_group_name, var.resource_group_name)
 }
