@@ -1723,3 +1723,9 @@ variable "flux_blob_storage" {
   sensitive   = true
   default     = null
 }
+
+variable "appgw_resource_group_name" {
+  type        = string
+  default     = null
+  description = "A container that holds Application Gateway related resources for an Azure solution"
+}
