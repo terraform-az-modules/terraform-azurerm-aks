@@ -5,9 +5,11 @@ on:
     types: [closed]
 
 jobs:
-  release:
-    uses: clouddrove/github-shared-workflows/.github/workflows/release-tag.yml@master
+  handle-release:
+    if: github.event.pull_request.merged == true
+    uses: clouddrove/github-shared-workflows/.github/workflows/release-tag.yml@v2
     with:
-      target_branch: master
+      target_branch: ${{ github.event.pull_request.base.ref }}
+      tag_format: "vX.Y.Z"  # or "X.Y.Z" depending on your preference
     secrets:
       GITHUB: ${{ secrets.GITHUB }}
