@@ -1,4 +1,4 @@
-name: Terraform Azure Azure Kubernetes Service
+name: Terraform Azure Kubernetes Service
 
 intro: |-
   With our comprehensive DevOps toolkit - streamline operations, automate workflows, enhance collaboration and deploy with confidence.
@@ -14,7 +14,7 @@ github_repo: terraform-az-modules/terraform-azurerm-aks
 
 badges:
   - name: "Terraform"
-    image: "https://img.shields.io/badge/Terraform-v1.6-green"
+    image: "https://img.shields.io/badge/Terraform-v1.10.0-green"
     url: "https://www.terraform.io"
 
   - name: "Licence"
@@ -24,7 +24,7 @@ badges:
 prerequisites:
   - name: Terraform
     url: https://learn.hashicorp.com/terraform/getting-started/install.html
-    version: ">= 1.6.6"
+    version: ">= 1.10.0"
 
 providers:
   - name: azurerm
@@ -38,11 +38,12 @@ usage: |-
   ### Example
 
   ```hcl
-  module "aks" {
-    source = "./"
-
-    name                = "aks-demo"
-    resource_group_name = "rg-demo"
-    location            = "Central India"
+  module "resource_group" {
+    source      = "terraform-az-modules/resource-group/azurerm"
+    version     = "1.0.3"
+    name        = "core"
+    environment = "dev"
+    location    = "centralus"
+    label_order = ["name", "environment", "location"]
   }
   ```
