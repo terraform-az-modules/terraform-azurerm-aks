@@ -55,11 +55,13 @@ jobs:
           mkdir -p docs
           terraform-docs md . --hide providers --hide requirements > docs/io.md
           make readme GENIE_PATH=/home/runner/genie
-
+     
       - name: Commit and push changes
+        env:
+          TOKEN: ${{ secrets.GITHUB }}
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "clouddrove-ci"
+          git config --global user.email "cloudrove-ci@clouddrove.com"
 
           git add README.md docs/io.md
 
@@ -67,5 +69,6 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "docs: update README"
+
             git push origin HEAD:${{ github.ref_name }}
           fi
