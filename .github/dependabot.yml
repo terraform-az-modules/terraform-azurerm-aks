@@ -16,6 +16,9 @@ updates:
     reviewers:
     - "approvers"
     - "Crew"
+    # Overrides default major/minor/patch labels
+    labels:
+      - "dependencies"
 
   - package-ecosystem: "terraform" # See documentation for possible values
     directory: "/" # Location of package manifests
@@ -28,6 +31,9 @@ updates:
     reviewers:
       - "approvers"
       - "Crew"
+    # Overrides default major/minor/patch labels
+    labels:
+      - "dependencies"
     # Allow up to 3 open pull requests for pip dependencies
     open-pull-requests-limit: 3
 
@@ -42,5 +48,8 @@ updates:
     reviewers:
       - "approvers"
       - "Crew"
+    # Overrides default major/minor/patch labels
+    labels:
+      - "dependencies"
     # Allow up to 3 open pull requests for pip dependencies
     open-pull-requests-limit: 3
