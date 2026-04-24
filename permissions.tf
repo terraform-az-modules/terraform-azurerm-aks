@@ -22,13 +22,6 @@ resource "azurerm_role_assignment" "aks_system_identity" {
   role_definition_name = "Key Vault Crypto Service Encryption User"
 }
 
-resource "azurerm_role_assignment" "aks_acr_access_principal_id" {
-  count                = var.enable && var.acr_enabled ? 1 : 0
-  principal_id         = azurerm_kubernetes_cluster.main[0].identity[0].principal_id
-  scope                = var.acr_id
-  role_definition_name = "AcrPull"
-}
-
 resource "azurerm_role_assignment" "aks_acr_access_object_id" {
   count                = var.enable && var.acr_enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.main[0].kubelet_identity[0].object_id
