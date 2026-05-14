@@ -45,7 +45,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "main" {
     for_each = var.kubelet_config != null ? [var.kubelet_config] : []
     content {
       allowed_unsafe_sysctls    = kubelet_config.value.allowed_unsafe_sysctls
-      container_log_max_line    = kubelet_config.value.container_log_max_line
+      container_log_max_files   = kubelet_config.value.container_log_max_files
       container_log_max_size_mb = kubelet_config.value.container_log_max_size_mb
       cpu_cfs_quota_enabled     = kubelet_config.value.cpu_cfs_quota_enabled
       cpu_cfs_quota_period      = kubelet_config.value.cpu_cfs_quota_period
@@ -99,11 +99,13 @@ resource "azurerm_kubernetes_cluster_node_pool" "main" {
     }
   }
   dynamic "upgrade_settings" {
-    for_each = var.agents_pool_max_surge == null ? [] : ["upgrade_settings"]
+    for_each = var.agents_pool_max_surge != null || var.agents_pool_max_unavailable != null ? ["upgrade_settings"] : []
     content {
       max_surge                     = var.agents_pool_max_surge
+      max_unavailable               = var.agents_pool_max_unavailable
       drain_timeout_in_minutes      = var.agents_pool_drain_timeout_in_minutes
       node_soak_duration_in_minutes = var.agents_pool_node_soak_duration_in_minutes
+      undrainable_node_behavior     = var.agents_pool_undrainable_node_behavior
     }
   }
   windows_profile {

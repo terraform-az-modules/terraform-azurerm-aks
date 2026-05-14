@@ -146,7 +146,7 @@ resource "azurerm_kubernetes_cluster" "main" {
         for_each = var.agents_pool_kubelet_configs
         content {
           allowed_unsafe_sysctls    = kubelet_config.value.allowed_unsafe_sysctls
-          container_log_max_line    = kubelet_config.value.container_log_max_line
+          container_log_max_files   = kubelet_config.value.container_log_max_files
           container_log_max_size_mb = kubelet_config.value.container_log_max_size_mb
           cpu_cfs_quota_enabled     = kubelet_config.value.cpu_cfs_quota_enabled
           cpu_cfs_quota_period      = kubelet_config.value.cpu_cfs_quota_period
@@ -353,8 +353,10 @@ resource "azurerm_kubernetes_cluster" "main" {
   dynamic "service_mesh_profile" {
     for_each = var.service_mesh_profile == null ? [] : [var.service_mesh_profile]
     content {
-      mode      = service_mesh_profile.value.mode
-      revisions = lookup(service_mesh_profile.value, "revisions", [])
+      mode                             = service_mesh_profile.value.mode
+      revisions                        = lookup(service_mesh_profile.value, "revisions", [])
+      internal_ingress_gateway_enabled = service_mesh_profile.value.internal_ingress_gateway_enabled
+      external_ingress_gateway_enabled = service_mesh_profile.value.external_ingress_gateway_enabled
     }
   }
   dynamic "service_principal" {

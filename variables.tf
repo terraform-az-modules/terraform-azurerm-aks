@@ -477,7 +477,13 @@ variable "default_node_pool_config" {
 variable "agents_pool_max_surge" {
   type        = string
   default     = "10%"
-  description = "The maximum number or percentage of nodes which will be added to the Default Node Pool size during an upgrade."
+  description = "The maximum number or percentage of nodes which will be added to the Default Node Pool size during an upgrade. Mutually exclusive with agents_pool_max_unavailable."
+}
+
+variable "agents_pool_max_unavailable" {
+  type        = string
+  default     = null
+  description = "(Optional) The maximum number or percentage of nodes which can be unavailable during upgrade. Mutually exclusive with agents_pool_max_surge. Spot node pools must use this instead of max_surge."
 }
 
 variable "agents_pool_node_soak_duration_in_minutes" {
@@ -550,7 +556,7 @@ variable "node_pools" {
 variable "kubelet_config" {
   type = object({
     allowed_unsafe_sysctls    = optional(list(string))
-    container_log_max_line    = optional(number)
+    container_log_max_files   = optional(number)
     container_log_max_size_mb = optional(string)
     cpu_cfs_quota_enabled     = optional(bool)
     cpu_cfs_quota_period      = optional(string)
@@ -574,7 +580,7 @@ variable "agents_pool_kubelet_configs" {
     topology_manager_policy   = optional(string)
     allowed_unsafe_sysctls    = optional(set(string))
     container_log_max_size_mb = optional(number)
-    container_log_max_line    = optional(number)
+    container_log_max_files   = optional(number)
     pod_max_pid               = optional(number)
   }))
   default     = []
