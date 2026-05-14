@@ -144,8 +144,8 @@ variable "automatic_channel_upgrade" {
 
 variable "local_account_disabled" {
   type        = bool
-  default     = false
-  description = "Disable local account?"
+  default     = true
+  description = "Disable the local admin account on the AKS cluster. Recommended true for production — use AAD/RBAC instead."
 }
 
 variable "cost_analysis_enabled" {
@@ -219,7 +219,12 @@ variable "support_plan" {
 variable "open_service_mesh_enabled" {
   type        = bool
   default     = false
-  description = "Enable Open Service Mesh (OSM) addon for service mesh capabilities"
+  description = <<-EOT
+    DEPRECATED: Open Service Mesh (OSM) was retired by Microsoft on May 24, 2023 and 
+    removed from AKS. This variable is kept for backward compatibility but has no effect.
+    Use a supported service mesh such as Istio (via service_mesh_profile) instead.
+    See: https://aka.ms/aks/osm-retirement
+  EOT
 }
 
 variable "bootstrap_profile" {
@@ -713,7 +718,11 @@ variable "auto_scaler_profile" {
 variable "node_provisioning_mode" {
   type        = string
   default     = "Manual"
-  description = "Provisioning mode for AKS node pools"
+  description = "Provisioning mode for AKS node pools. Valid values: 'Manual' (default, standard node pools), 'Auto' (Node Auto Provisioning / Karpenter-based). 'Auto' requires network_plugin=azure and network_plugin_mode=overlay."
+  validation {
+    condition     = contains(["Manual", "Auto"], var.node_provisioning_mode)
+    error_message = "node_provisioning_mode must be 'Manual' or 'Auto'."
+  }
 }
 
 variable "node_provisioning_default_node_pools" {
@@ -798,12 +807,12 @@ variable "role_based_access_control_enabled" {
 
 variable "role_based_access_control" {
   type = list(object({
-    managed            = bool
     tenant_id          = optional(string)
     azure_rbac_enabled = bool
+    # managed field removed — deprecated and ignored in azurerm 4.x; AAD integration is always managed
   }))
   default     = null
-  description = "RBAC configuration block specifying managed AAD integration, tenant ID, and Azure RBAC enablement"
+  description = "AAD RBAC configuration for the AKS cluster. Set azure_rbac_enabled=true to use Azure RBAC for Kubernetes authorization."
 }
 
 variable "admin_group_id" {
@@ -865,8 +874,13 @@ variable "microsoft_defender_enabled" {
 
 variable "oms_agent_enabled" {
   type        = bool
-  default     = true
-  description = "Enable Log Analytics (OMS agent) add-on."
+  default     = false
+  description = <<-EOT
+    DEPRECATED: The OMS agent (Log Analytics agent) is deprecated by Microsoft and will 
+    be retired. Default changed to false. Use monitor_metrics (Managed Prometheus) or 
+    microsoft_defender for observability instead.
+    See: https://aka.ms/aks/oms-agent-deprecation
+  EOT
 }
 
 variable "aci_connector_linux_enabled" {

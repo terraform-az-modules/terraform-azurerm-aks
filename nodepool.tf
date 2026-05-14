@@ -2,6 +2,8 @@
 ## Additional Node Pools
 ##-----------------------------------------------------------------------------
 resource "azurerm_kubernetes_cluster_node_pool" "main" {
+  #checkov:skip=CKV_AZURE_168: max_pods defaults to 50 in node_pools variable object; checkov cannot evaluate for_each variable defaults
+  #checkov:skip=CKV_AZURE_227: host_encryption_enabled defaults to true in node_pools variable object; checkov cannot evaluate for_each variable defaults
   for_each                      = var.enable ? var.node_pools : {}
   kubernetes_cluster_id         = azurerm_kubernetes_cluster.main[0].id
   name                          = each.key

@@ -140,18 +140,21 @@ output "ingress_appgw_identity_id" {
   value       = try(azurerm_kubernetes_cluster.main[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].user_assigned_identity_id, null)
 }
 
+# NOTE: oms_agent outputs retained for backward compatibility.
+# OMS agent is deprecated — Microsoft recommends migrating to Azure Monitor Agent.
+# These will return null when oms_agent_enabled=false (the new default).
 output "oms_agent_identity_client_id" {
-  description = "Client ID of managed identity used by OMS Agents."
+  description = "DEPRECATED: Client ID of OMS Agent managed identity. Migrate to Azure Monitor Agent."
   value       = try(azurerm_kubernetes_cluster.main[0].oms_agent[0].oms_agent_identity[0].client_id, null)
 }
 
 output "oms_agent_identity_object_id" {
-  description = "Object ID of managed identity used by OMS Agents."
+  description = "DEPRECATED: Object ID of OMS Agent managed identity. Migrate to Azure Monitor Agent."
   value       = try(azurerm_kubernetes_cluster.main[0].oms_agent[0].oms_agent_identity[0].object_id, null)
 }
 
 output "oms_agent_identity_id" {
-  description = "Resource ID of user-assigned identity used by OMS Agents."
+  description = "DEPRECATED: Resource ID of OMS Agent user-assigned identity. Migrate to Azure Monitor Agent."
   value       = try(azurerm_kubernetes_cluster.main[0].oms_agent[0].oms_agent_identity[0].user_assigned_identity_id, null)
 }
 
