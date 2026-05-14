@@ -2,7 +2,8 @@
 ## Permissions, Roles, and Policies
 ##-----------------------------------------------------------------------------
 resource "azurerm_role_assignment" "aks_entraid" {
-  count                = var.enable && var.role_based_access_control != null && try(var.role_based_access_control[0].azure_rbac_enabled, false) == true ? length(var.admin_group_id) : 0
+  count = (var.enable && var.role_based_access_control != null && try(var.role_based_access_control[0].azure_rbac_enabled, false) == true
+  ) ? length(coalesce(var.admin_group_id, [])) : 0
   scope                = azurerm_kubernetes_cluster.main[0].id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
   principal_id         = var.admin_group_id[count.index]

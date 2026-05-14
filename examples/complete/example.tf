@@ -96,7 +96,7 @@ module "private_dns_zone" {
 module "vault" {
   source                        = "terraform-az-modules/key-vault/azurerm"
   version                       = "1.0.1"
-  name                          = "core"
+  name                          = "cd"
   environment                   = "dev"
   label_order                   = ["name", "environment", "location"]
   resource_group_name           = module.resource_group.resource_group_name
@@ -170,4 +170,15 @@ module "aks" {
   fleet_node_image_selection_type  = "Latest"
 
   log_analytics_workspace_id = module.log-analytics.workspace_id
+
+local_account_disabled = true
+
+role_based_access_control = [
+  {
+    tenant_id          = "bcffb719-9620-4b7c-b1b0-87ebfb2f7bdd"
+    azure_rbac_enabled = true
+  }
+]
+
+
 }
