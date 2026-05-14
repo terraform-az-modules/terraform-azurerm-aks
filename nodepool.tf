@@ -41,6 +41,23 @@ resource "azurerm_kubernetes_cluster_node_pool" "main" {
   priority                      = each.value.priority
   temporary_name_for_rotation   = each.value.temporary_name_for_rotation
   ultra_ssd_enabled             = each.value.ultra_ssd_enabled
+  gpu_driver                    = each.value.gpu_driver
+  node_public_ip_prefix_id      = each.value.node_public_ip_prefix_id
+  dynamic "node_network_profile" {
+    for_each = each.value.node_network_profile != null ? [each.value.node_network_profile] : []
+    content {
+      node_public_ip_tags            = node_network_profile.value.node_public_ip_tags
+      application_security_group_ids = node_network_profile.value.application_security_group_ids
+      dynamic "allowed_host_ports" {
+        for_each = node_network_profile.value.allowed_host_ports != null ? node_network_profile.value.allowed_host_ports : []
+        content {
+          port_start = allowed_host_ports.value.port_start
+          port_end   = allowed_host_ports.value.port_end
+          protocol   = allowed_host_ports.value.protocol
+        }
+      }
+    }
+  }
   dynamic "kubelet_config" {
     for_each = var.kubelet_config != null ? [var.kubelet_config] : []
     content {
@@ -99,12 +116,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "main" {
     }
   }
   dynamic "upgrade_settings" {
-    for_each = var.agents_pool_max_surge != null || var.agents_pool_max_unavailable != null ? ["upgrade_settings"] : []
+    for_each = each.value.agents_pool_max_surge != null || each.value.max_unavailable != null || var.agents_pool_max_surge != null || var.agents_pool_max_unavailable != null ? ["upgrade_settings"] : []
     content {
-      max_surge                     = var.agents_pool_max_surge
-      max_unavailable               = var.agents_pool_max_unavailable
-      drain_timeout_in_minutes      = var.agents_pool_drain_timeout_in_minutes
-      node_soak_duration_in_minutes = var.agents_pool_node_soak_duration_in_minutes
+      max_surge                     = try(each.value.agents_pool_max_surge, var.agents_pool_max_surge, null)
+      max_unavailable               = try(each.value.max_unavailable, var.agents_pool_max_unavailable, null)
+      drain_timeout_in_minutes      = try(each.value.drain_timeout_in_minutes, var.agents_pool_drain_timeout_in_minutes, null)
+      node_soak_duration_in_minutes = try(each.value.node_soak_duration_in_minutes, var.agents_pool_node_soak_duration_in_minutes, null)
       undrainable_node_behavior     = var.agents_pool_undrainable_node_behavior
     }
   }

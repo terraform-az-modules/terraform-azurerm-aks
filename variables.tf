@@ -545,6 +545,18 @@ variable "node_pools" {
     spot_max_price                = optional(number, null)
     tags                          = optional(map(string), null)
     ultra_ssd_enabled             = optional(bool, null)
+    gpu_driver                    = optional(string, null)
+    node_public_ip_prefix_id      = optional(string, null)
+    max_unavailable               = optional(string, null)
+    node_network_profile = optional(object({
+      node_public_ip_tags            = optional(map(string), null)
+      application_security_group_ids = optional(list(string), null)
+      allowed_host_ports = optional(list(object({
+        port_start = number
+        port_end   = number
+        protocol   = string
+      })), null)
+    }), null)
   }))
   default     = {}
   description = "Map of additional node pools"
