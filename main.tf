@@ -22,6 +22,16 @@ resource "azurerm_kubernetes_cluster" "main" {
   #checkov:skip=CKV_AZURE_115: private_cluster_enabled is opt-in by design; not all deployments support private DNS
   #checkov:skip=CKV_AZURE_168: max_pods default is 50 (meets requirement); checkov cannot evaluate through dynamic default_node_pool blocks
   #checkov:skip=CKV_AZURE_227: host_encryption_enabled defaults to true in node pool variable object; checkov cannot evaluate through dynamic blocks
+  lifecycle {
+    precondition {
+      condition     = var.node_provisioning_mode != "Auto" || (var.network_plugin == "azure" && var.network_plugin_mode == "overlay")
+      error_message = "node_provisioning_mode='Auto' requires network_plugin='azure' and network_plugin_mode='overlay'."
+    }
+    precondition {
+      condition     = var.role_based_access_control == null ? true : alltrue([for r in var.role_based_access_control : (r.azure_rbac_enabled || var.admin_group_id != null)])
+      error_message = "When azure_rbac_enabled=false, admin_group_id must be provided for AAD integration to remain manageable."
+    }
+  }
   count                               = var.enable ? 1 : 0
   name                                = var.resource_position_prefix ? format("aks-%s", local.name) : format("%s-aks", local.name)
   location                            = var.location

@@ -894,9 +894,15 @@ variable "oms_agent_enabled" {
   type        = bool
   default     = false
   description = <<-EOT
-    DEPRECATED: The OMS agent (Log Analytics agent) is deprecated by Microsoft and will 
-    be retired. Default changed to false. Use monitor_metrics (Managed Prometheus) or 
-    microsoft_defender for observability instead.
+    DEPRECATED: The legacy Log Analytics agent (OMS agent) is being retired by Microsoft.
+    Default changed to false (opt-in).
+
+    For Container Insights (log collection), you can still enable this block but MUST set
+    msi_auth_for_monitoring_enabled=true to use the Azure Monitor Agent (AMA) backend.
+
+    For metrics collection, use monitor_metrics (Managed Prometheus) instead.
+    For security logs, use microsoft_defender instead.
+
     See: https://aka.ms/aks/oms-agent-deprecation
   EOT
 }
