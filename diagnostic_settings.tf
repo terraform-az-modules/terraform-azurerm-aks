@@ -105,4 +105,5 @@ resource "azurerm_monitor_diagnostic_setting" "nic_diag" {
   lifecycle {
     ignore_changes = [log_analytics_destination_type]
   }
+  partner_solution_id = var.partner_solution_id
 }

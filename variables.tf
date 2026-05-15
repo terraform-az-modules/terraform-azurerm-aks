@@ -903,12 +903,6 @@ variable "web_app_routing" {
   description = "Web App Routing configuration (DNS Zone IDs)."
 }
 
-variable "network_mode" {
-  type        = string
-  default     = null
-  description = "Network mode to be used with Azure CNI. Possible values are bridge and transparent"
-}
-
 variable "pod_cidrs" {
   type        = list(string)
   default     = null
@@ -1728,4 +1722,147 @@ variable "appgw_resource_group_name" {
   type        = string
   default     = null
   description = "A container that holds Application Gateway related resources for an Azure solution"
+}
+variable "cross_region_restore_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable cross-region restore for the backup vault."
+}
+
+variable "retention_duration_in_days" {
+  type        = number
+  default     = 30
+  description = "Retention duration in days for the backup vault."
+}
+
+variable "immutability" {
+  type        = bool
+  default     = false
+  description = "Enable immutability for the backup vault."
+}
+
+variable "tags" {
+  type        = map(string)
+  default     = {}
+  description = "Tags for the backup vault."
+}
+
+variable "soft_delete" {
+  type        = bool
+  default     = false
+  description = "Enable soft delete for the backup vault."
+}
+
+variable "time_zone" {
+  type        = string
+  default     = "UTC"
+  description = "Time zone for the backup policy."
+}
+
+variable "curve" {
+  type        = string
+  default     = null
+  description = "Curve for the key vault key."
+}
+
+variable "partner_solution_id" {
+  type        = string
+  default     = null
+  description = "Partner solution ID for the diagnostic setting."
+}
+
+variable "not_before_date" {
+  type        = string
+  default     = null
+  description = "Not before date for the key vault key."
+}
+
+variable "auto_key_rotation_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable auto key rotation for the disk encryption set."
+}
+
+variable "encryption_type" {
+  type        = string
+  default     = "EncryptionAtRest"
+  description = "Encryption type for the disk encryption set."
+}
+
+variable "federated_client_id" {
+  type        = string
+  default     = null
+  description = "Federated client ID for the disk encryption set."
+}
+
+variable "managed_hsm_key_id" {
+  type        = string
+  default     = null
+  description = "Managed HSM key ID for the disk encryption set."
+}
+
+variable "version" {
+  type        = string
+  default     = null
+  description = "Version for azurerm_kubernetes_cluster_extension"
+}
+
+variable "gpu_driver" {
+  type        = string
+  default     = null
+  description = "GPU driver for azurerm_kubernetes_cluster_node_pool"
+}
+
+variable "node_public_ip_prefix_id" {
+  type        = string
+  default     = null
+  description = "Node public IP prefix ID for azurerm_kubernetes_cluster_node_pool"
+}
+
+variable "condition_version" {
+  type        = string
+  default     = null
+  description = "Condition version for azurerm_role_assignment"
+}
+
+variable "delegated_managed_identity_resource_id" {
+  type        = string
+  default     = null
+  description = "Delegated managed identity resource ID for azurerm_role_assignment"
+}
+
+variable "condition" {
+  type        = string
+  default     = null
+  description = "Condition for azurerm_role_assignment"
+}
+
+variable "principal_type" {
+  type        = string
+  default     = null
+  description = "Principal type for azurerm_role_assignment"
+}
+
+variable "description" {
+  type        = string
+  default     = null
+  description = "Description for azurerm_role_assignment"
+}
+
+variable "role_definition_id" {
+  type        = string
+  default     = null
+  description = "Role definition ID for azurerm_role_assignment"
+}
+
+variable "skip_service_principal_aad_check" {
+  type        = bool
+  default     = false
+  description = "Skip service principal AAD check for azurerm_role_assignment"
+}
+
+variable "identity_ids" {
+  type        = list(string)
+  default     = null
+  description = "Identity IDs for azurerm_data_protection_backup_vault"
 }

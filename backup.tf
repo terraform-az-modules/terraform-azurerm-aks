@@ -12,6 +12,12 @@ resource "azurerm_data_protection_backup_vault" "backup_vault" {
   identity {
     type = "SystemAssigned"
   }
+  cross_region_restore_enabled = var.cross_region_restore_enabled
+  immutability                 = var.immutability
+  retention_duration_in_days   = var.retention_duration_in_days
+  soft_delete                  = var.soft_delete
+  tags                         = var.tags
+  identity_ids                 = var.identity_ids
 }
 
 resource "azurerm_data_protection_backup_policy_kubernetes_cluster" "backup_policy" {
@@ -47,6 +53,7 @@ resource "azurerm_data_protection_backup_policy_kubernetes_cluster" "backup_poli
       }
     }
   }
+  time_zone = var.time_zone
 }
 
 resource "azurerm_kubernetes_cluster_trusted_access_role_binding" "aks_cluster_trusted_access" {
@@ -71,6 +78,7 @@ resource "azurerm_kubernetes_cluster_extension" "backup_cluster_extension" {
     "configuration.backupStorageLocation.config.subscriptionId" = data.azurerm_client_config.current.subscription_id
     "credentials.tenantId"                                      = data.azurerm_client_config.current.tenant_id
   }
+  version = var.version
 }
 
 resource "azurerm_data_protection_backup_instance_kubernetes_cluster" "main" {

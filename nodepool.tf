@@ -107,4 +107,6 @@ resource "azurerm_kubernetes_cluster_node_pool" "main" {
   windows_profile {
     outbound_nat_enabled = var.outbound_nat_enabled
   }
+  gpu_driver               = var.gpu_driver
+  node_public_ip_prefix_id = var.node_public_ip_prefix_id
 }

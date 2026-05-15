@@ -51,7 +51,6 @@ resource "azurerm_kubernetes_cluster" "main" {
   dynamic "bootstrap_profile" {
     for_each = var.bootstrap_profile == null ? [] : [var.bootstrap_profile]
     content {
-      artifact_source       = bootstrap_profile.value.artifact_source
       container_registry_id = bootstrap_profile.value.container_registry_id
     }
   }
@@ -423,7 +422,6 @@ resource "azurerm_kubernetes_cluster" "main" {
     network_plugin_mode = var.network_plugin_mode
     outbound_type       = var.outbound_type
     pod_cidr            = var.net_profile_pod_cidr
-    network_mode        = var.network_mode
     pod_cidrs           = var.pod_cidrs
     service_cidrs       = var.service_cidrs
     ip_versions         = var.ip_versions
@@ -470,8 +468,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     for_each = var.upgrade_override == null ? [] : [var.upgrade_override]
 
     content {
-      force_upgrade_enabled = upgrade_override.value.force_upgrade_enabled
-      effective_until       = upgrade_override.value.effective_until
+      effective_until = upgrade_override.value.effective_until
     }
   }
   depends_on = [
@@ -502,6 +499,8 @@ resource "azurerm_key_vault_key" "main" {
       notify_before_expiry = rotation_policy.value.notify_before_expiry
     }
   }
+  not_before_date = var.not_before_date
+  curve           = var.curve
 }
 
 ##-----------------------------------------------------------------------------
@@ -516,6 +515,10 @@ resource "azurerm_disk_encryption_set" "main" {
   identity {
     type = "SystemAssigned"
   }
+  auto_key_rotation_enabled = var.auto_key_rotation_enabled
+  encryption_type           = var.encryption_type
+  federated_client_id       = var.federated_client_id
+  managed_hsm_key_id        = var.managed_hsm_key_id
 }
 
 resource "azurerm_kubernetes_cluster_extension" "main" {
