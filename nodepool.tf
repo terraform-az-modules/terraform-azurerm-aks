@@ -107,6 +107,15 @@ resource "azurerm_kubernetes_cluster_node_pool" "main" {
   windows_profile {
     outbound_nat_enabled = var.outbound_nat_enabled
   }
-  gpu_driver               = var.gpu_driver
-  node_public_ip_prefix_id = var.node_public_ip_prefix_id
+  gpu_driver                     = var.gpu_driver
+  node_public_ip_prefix_id       = var.node_public_ip_prefix_id
+  allowed_host_ports             = var.allowed_host_ports
+  node_public_ip_tags            = var.node_public_ip_tags
+  container_log_max_files        = var.container_log_max_files
+  max_unavailable                = var.max_unavailable
+  application_security_group_ids = var.application_security_group_ids
+  protocol                       = var.protocol
+  port_start                     = var.port_start
+  undrainable_node_behavior      = var.undrainable_node_behavior
+  port_end                       = var.port_end
 }

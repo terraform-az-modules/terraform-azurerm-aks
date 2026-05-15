@@ -78,7 +78,11 @@ resource "azurerm_kubernetes_cluster_extension" "backup_cluster_extension" {
     "configuration.backupStorageLocation.config.subscriptionId" = data.azurerm_client_config.current.subscription_id
     "credentials.tenantId"                                      = data.azurerm_client_config.current.tenant_id
   }
-  version = var.version
+  version        = var.version
+  plan           = var.plan
+  publisher      = var.publisher
+  product        = var.product
+  promotion_code = var.promotion_code
 }
 
 resource "azurerm_data_protection_backup_instance_kubernetes_cluster" "main" {

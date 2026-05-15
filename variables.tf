@@ -1866,3 +1866,111 @@ variable "identity_ids" {
   default     = null
   description = "Identity IDs for azurerm_data_protection_backup_vault"
 }
+
+variable "plan" {
+  type        = string
+  default     = null
+  description = "Plan for the Kubernetes cluster extension."
+}
+
+variable "product" {
+  type        = string
+  default     = null
+  description = "Product for the Kubernetes cluster extension."
+}
+
+variable "promotion_code" {
+  type        = string
+  default     = null
+  description = "Promotion code for the Kubernetes cluster extension."
+}
+
+variable "publisher" {
+  type        = string
+  default     = null
+  description = "Publisher for the Kubernetes cluster extension."
+}
+
+variable "category_group" {
+  type        = string
+  default     = null
+  description = "Category group for NIC diagnostic settings."
+}
+
+variable "enabled_log" {
+  type        = string
+  default     = null
+  description = "Enabled log for NIC diagnostic settings."
+}
+
+variable "cert_chain_object_name" {
+  type        = string
+  default     = null
+  description = "Certificate chain object name for the Kubernetes cluster."
+}
+
+variable "artifact_source" {
+  type        = string
+  default     = null
+  description = "Artifact source for the Kubernetes cluster."
+}
+
+variable "time_after_creation" {
+  type        = string
+  default     = null
+  description = "Time after creation for the Key Vault key."
+}
+
+variable "allowed_host_ports" {
+  type        = string
+  default     = null
+  description = "Allowed host ports for the Kubernetes cluster node pool."
+}
+
+variable "application_security_group_ids" {
+  type        = list(string)
+  default     = null
+  description = "Application security group IDs for the Kubernetes cluster node pool."
+}
+
+variable "container_log_max_files" {
+  type        = number
+  default     = null
+  description = "Maximum number of container log files for the Kubernetes cluster node pool."
+}
+
+variable "max_unavailable" {
+  type        = number
+  default     = null
+  description = "Maximum number of unavailable nodes for the Kubernetes cluster node pool."
+}
+
+variable "node_public_ip_tags" {
+  type        = map(string)
+  default     = null
+  description = "Tags for the public IPs of the Kubernetes cluster node pool."
+}
+
+variable "port_start" {
+  type        = number
+  default     = null
+  description = "Start port for the Kubernetes cluster node pool."
+}
+
+variable "port_end" {
+  type        = number
+  default     = null
+  description = "End port for the Kubernetes cluster node pool."
+}
+
+variable "undrainable_node_behavior" {
+  type        = string
+  default     = null
+  description = "Behavior for undrainable nodes in the Kubernetes cluster node pool."
+}
+
+variable "protocol" {
+  type        = string
+  default     = null
+  description = "Protocol for the Kubernetes cluster node pool."
+}

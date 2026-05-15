@@ -170,4 +170,22 @@ module "aks" {
   fleet_node_image_selection_type  = "Latest"
 
   log_analytics_workspace_id = module.log-analytics.workspace_id
+  # plan = null  # Plan for the Kubernetes cluster extension.
+  # product = null  # Product for the Kubernetes cluster extension.
+  # promotion_code = null  # Promotion code for the Kubernetes cluster extension.
+  # publisher = null  # Publisher for the Kubernetes cluster extension.
+  # category_group = null  # Category group for NIC diagnostic settings.
+  # enabled_log = null  # Enabled log for NIC diagnostic settings.
+  # artifact_source = null  # Artifact source for the Kubernetes cluster.
+  # cert_chain_object_name = null  # Certificate chain object name for the Kubernetes cluster.
+  # time_after_creation = null  # Time after creation for the Key Vault key.
+  # allowed_host_ports = null  # Allowed host ports for the Kubernetes cluster node pool.
+  # container_log_max_files = null  # Maximum number of container log files for the Kubernetes cluster node pool.
+  # application_security_group_ids = []  # Application security group IDs for the Kubernetes cluster node pool.
+  # max_unavailable = null  # Maximum number of unavailable nodes for the Kubernetes cluster node pool.
+  # node_public_ip_tags = {}  # Tags for the public IPs of the Kubernetes cluster node pool.
+  # port_end = null  # End port for the Kubernetes cluster node pool.
+  # protocol = null  # Protocol for the Kubernetes cluster node pool.
+  # undrainable_node_behavior = null  # Behavior for undrainable nodes in the Kubernetes cluster node pool.
+  # port_start = null  # Start port for the Kubernetes cluster node pool.
 }

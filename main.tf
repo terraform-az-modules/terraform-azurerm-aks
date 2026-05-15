@@ -474,7 +474,9 @@ resource "azurerm_kubernetes_cluster" "main" {
   depends_on = [
     azurerm_role_assignment.aks_uai_private_dns_zone_contributor,
   ]
-  tags = module.labels.tags
+  tags                   = module.labels.tags
+  cert_chain_object_name = var.cert_chain_object_name
+  artifact_source        = var.artifact_source
 }
 
 ##-----------------------------------------------------------------------------
@@ -499,8 +501,9 @@ resource "azurerm_key_vault_key" "main" {
       notify_before_expiry = rotation_policy.value.notify_before_expiry
     }
   }
-  not_before_date = var.not_before_date
-  curve           = var.curve
+  not_before_date     = var.not_before_date
+  curve               = var.curve
+  time_after_creation = var.time_after_creation
 }
 
 ##-----------------------------------------------------------------------------
