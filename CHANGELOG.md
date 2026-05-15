@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new optional variables with safe defaults (backward-compatible)
 - Updated docs/io.md and examples/complete-function/example.tf
 
+## [Unreleased] - 2026-05-15
+### :sparkles: New Features
+- Updated module to add missing AWS provider v5/v6 arguments
+- Added new optional variables with safe defaults (backward-compatible)
+- Updated docs/io.md and examples/complete-function/example.tf
+
 ## [v1.0.6] - 2026-04-24
 ### :bug: Bug Fixes
 - [`f8b4b19`](https://github.com/terraform-az-modules/terraform-azurerm-aks/commit/f8b4b19d271952e37a46aed7267faba746cff6ca) - added the dependabot dependcies and readme
