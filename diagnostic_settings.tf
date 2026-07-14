@@ -70,8 +70,8 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_diag" {
   dynamic "enabled_log" {
     for_each = var.nsg_logs
     content {
-      category_group = lookup(enabled_log.value, "category_group", null)
-      category       = lookup(enabled_log.value, "category", null)
+      category_group = enabled_log.value.category_group
+      category       = enabled_log.value.category
     }
   }
 
