@@ -144,6 +144,8 @@
 | node\_provisioning\_default\_node\_pools | Whether default node pools should be provisioned automatically | `string` | `"Auto"` | no |
 | node\_provisioning\_mode | Provisioning mode for AKS node pools | `string` | `"Manual"` | no |
 | node\_resource\_group | Name of the resource group in which to put AKS nodes. If null default to MC\_<AKS RG Name> | `string` | `null` | no |
+| nsg\_diagnostic\_setting\_enable | Enable diagnostic settings for the AKS managed NSG. | `bool` | `true` | no |
+| nsg\_logs | n/a | <pre>list(object({<br>    category       = optional(string)<br>    category_group = optional(string)<br>  }))</pre> | <pre>[<br>  {<br>    "category": "NetworkSecurityGroupEvent"<br>  },<br>  {<br>    "category": "NetworkSecurityGroupRuleCounter"<br>  }<br>]</pre> | no |
 | oidc\_issuer\_enabled | Enable OIDC issuer for workload identity federation | `bool` | `false` | no |
 | oms\_agent\_enabled | Enable Log Analytics (OMS agent) add-on. | `bool` | `true` | no |
 | open\_service\_mesh\_enabled | Enable Open Service Mesh (OSM) addon for service mesh capabilities | `bool` | `false` | no |
