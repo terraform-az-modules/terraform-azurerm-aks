@@ -143,4 +143,5 @@ module "aks" {
   microsoft_defender_enabled = false
   diagnostic_setting_enable  = false
   log_analytics_workspace_id = module.log-analytics.workspace_id
+  local_account_disabled     = true
 }

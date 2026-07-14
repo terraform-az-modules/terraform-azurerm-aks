@@ -1031,7 +1031,13 @@ variable "log_analytics_destination_type" {
 variable "diagnostic_setting_enable" {
   type        = bool
   description = "Enable or disable diagnostic settings for this resource"
-  default     = false
+  default     = true
+}
+
+variable "nsg_diagnostic_setting_enable" {
+  description = "Enable diagnostic settings for the AKS managed NSG."
+  type        = bool
+  default     = true
 }
 
 variable "storage_account_id" {
@@ -1082,6 +1088,23 @@ variable "aks_logs" {
     category_group = ["AllLogs"]
   }
   description = "Configuration for AKS diagnostic log settings. Specify log categories or category groups to collect"
+}
+
+variable "nsg_logs" {
+  type = list(object({
+    category       = optional(string)
+    category_group = optional(string)
+  }))
+
+  default = [
+    {
+      category = "NetworkSecurityGroupEvent"
+    },
+    {
+      category = "NetworkSecurityGroupRuleCounter"
+    }
+
+  ]
 }
 
 ##-----------------------------------------------------------------------------

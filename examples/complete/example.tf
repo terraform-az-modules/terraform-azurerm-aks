@@ -144,14 +144,15 @@ module "aks" {
       enable_auto_scaling = true
     }
   }
-  key_vault_id                 = module.vault.id
-  admin_objects_ids            = [data.azurerm_client_config.current_client_config.object_id]
-  microsoft_defender_enabled   = false
-  diagnostic_setting_enable    = false
-  enable_extensions            = true
-  enable_fleet_manager         = true
-  enable_fleet_update_strategy = true
-  enable_fleet_update_run      = true
+  key_vault_id                  = module.vault.id
+  admin_objects_ids             = [data.azurerm_client_config.current_client_config.object_id]
+  microsoft_defender_enabled    = false
+  diagnostic_setting_enable     = true
+  nsg_diagnostic_setting_enable = true
+  enable_extensions             = true
+  enable_fleet_manager          = true
+  enable_fleet_update_strategy  = true
+  enable_fleet_update_run       = true
   configuration_settings = {
     "helm-controller.enabled"   = "true"
     "source-controller.enabled" = "true"
