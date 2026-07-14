@@ -1031,7 +1031,7 @@ variable "log_analytics_destination_type" {
 variable "diagnostic_setting_enable" {
   type        = bool
   description = "Enable or disable diagnostic settings for this resource"
-  default     = true
+  default     = false
 }
 
 variable "nsg_diagnostic_setting_enable" {
