@@ -146,6 +146,9 @@ module "vault" {
   }
   diagnostic_setting_enable  = true
   log_analytics_workspace_id = module.log-analytics.workspace_id
+
+
+
 }
 
 ##-----------------------------------------------------------------------------
