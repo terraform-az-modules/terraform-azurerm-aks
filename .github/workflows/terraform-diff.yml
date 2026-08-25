@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - master
-    paths:
-      - 'examples/complete/**'
 
 jobs:
   public_cluster-example:
