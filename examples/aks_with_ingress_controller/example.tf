@@ -12,7 +12,7 @@ data "azurerm_client_config" "current_client_config" {}
 ##-----------------------------------------------------------------------------
 module "resource_group" {
   source      = "terraform-az-modules/resource-group/azurerm"
-  version     = "1.0.3"
+  version     = "1.0.4"
   name        = "core"
   environment = "dev"
   location    = "centralus"
@@ -24,7 +24,7 @@ module "resource_group" {
 ##-----------------------------------------------------------------------------
 module "vnet" {
   source              = "terraform-az-modules/vnet/azurerm"
-  version             = "1.0.3"
+  version             = "1.0.4"
   name                = "core"
   environment         = "dev"
   label_order         = ["name", "environment", "location"]
@@ -38,7 +38,7 @@ module "vnet" {
 ##-----------------------------------------------------------------------------
 module "subnet" {
   source               = "terraform-az-modules/subnet/azurerm"
-  version              = "1.0.1"
+  version              = "1.0.3"
   environment          = "dev"
   label_order          = ["name", "environment", "location"]
   resource_group_name  = module.resource_group.resource_group_name
@@ -61,7 +61,7 @@ module "subnet" {
 ##-----------------------------------------------------------------------------
 module "log-analytics" {
   source                      = "terraform-az-modules/log-analytics/azurerm"
-  version                     = "1.0.2"
+  version                     = "2.1.0"
   name                        = "core"
   environment                 = "dev"
   label_order                 = ["name", "environment", "location"]
@@ -76,7 +76,7 @@ module "log-analytics" {
 ##-----------------------------------------------------------------------------
 module "private_dns_zone" {
   source              = "terraform-az-modules/private-dns/azurerm"
-  version             = "1.0.2"
+  version             = "1.0.8"
   location            = module.resource_group.resource_group_location
   name                = "dns"
   environment         = "dev"
@@ -99,7 +99,7 @@ module "private_dns_zone" {
 ##-----------------------------------------------------------------------------
 module "vault" {
   source                        = "terraform-az-modules/key-vault/azurerm"
-  version                       = "1.0.1"
+  version                       = "3.2.0"
   name                          = "core"
   environment                   = "dev"
   label_order                   = ["name", "environment", "location"]
@@ -129,7 +129,7 @@ module "vault" {
 ##-----------------------------------------------------------------------------
 module "waf" {
   source              = "terraform-az-modules/waf/azurerm"
-  version             = "1.0.1"
+  version             = "3.0.0"
   name                = "core"
   environment         = "dev"
   label_order         = ["name", "environment", "location"]
@@ -150,7 +150,7 @@ module "waf" {
 ##------------------------------------------------------------------------------
 module "application_gateway" {
   source               = "terraform-az-modules/application-gateway/azurerm"
-  version              = "1.0.1"
+  version              = "3.0.0"
   name                 = "core"
   environment          = "dev"
   label_order          = ["name", "environment", "location"]

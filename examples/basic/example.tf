@@ -10,7 +10,7 @@ provider "azurerm" {
 ##-----------------------------------------------------------------------------
 module "resource_group" {
   source      = "terraform-az-modules/resource-group/azurerm"
-  version     = "1.0.3"
+  version     = "1.0.4"
   name        = "aks-basic"
   environment = "dev"
   location    = "centralus"
@@ -22,7 +22,7 @@ module "resource_group" {
 ##-----------------------------------------------------------------------------
 module "vnet" {
   source              = "terraform-az-modules/vnet/azurerm"
-  version             = "1.0.3"
+  version             = "1.0.4"
   name                = "aks-basic"
   environment         = "dev"
   label_order         = ["name", "environment"]
@@ -36,7 +36,7 @@ module "vnet" {
 ##-----------------------------------------------------------------------------
 module "subnet" {
   source               = "terraform-az-modules/subnet/azurerm"
-  version              = "1.0.1"
+  version              = "1.0.3"
   environment          = "dev"
   label_order          = ["name", "environment"]
   resource_group_name  = module.resource_group.resource_group_name
