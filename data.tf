@@ -1,24 +1,36 @@
 data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
+##-----------------------------------------------------------------------------
+## Diagnostic-setting resource discovery
+## Scoped to the AKS node resource group (dedicated to this cluster only, by
+## Azure design) so these can never resolve to an unrelated NIC/NSG/PIP
+## elsewhere in the subscription.
+##-----------------------------------------------------------------------------
 data "azurerm_resources" "aks_nic" {
-  depends_on = [azurerm_kubernetes_cluster.main]
-  count      = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  type       = "Microsoft.Network/networkInterfaces"
+  depends_on          = [azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
+  count               = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
+  resource_group_name = azurerm_kubernetes_cluster.main[0].node_resource_group
+  type                = "Microsoft.Network/networkInterfaces"
 }
 
 data "azurerm_resources" "aks_nsg" {
-  depends_on = [azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
-  count      = var.enable && var.diagnostic_setting_enable ? 1 : 0
-  type       = "Microsoft.Network/networkSecurityGroups"
+  depends_on          = [azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
+  count               = var.enable && var.diagnostic_setting_enable ? 1 : 0
+  resource_group_name = azurerm_kubernetes_cluster.main[0].node_resource_group
+  type                = "Microsoft.Network/networkSecurityGroups"
 }
 
 data "azurerm_resources" "aks_pip" {
-  depends_on = [azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
-  count      = var.enable && var.diagnostic_setting_enable ? 1 : 0
-  type       = "Microsoft.Network/publicIPAddresses"
+  depends_on          = [azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
+  count               = var.enable && var.diagnostic_setting_enable ? 1 : 0
+  resource_group_name = azurerm_kubernetes_cluster.main[0].node_resource_group
+  type                = "Microsoft.Network/publicIPAddresses"
 }
 
+##-----------------------------------------------------------------------------
+## Application Gateway ingress
+##-----------------------------------------------------------------------------
 data "azurerm_application_gateway" "appgw" {
   count               = var.enable && var.enable_ingress_application_gateway ? 1 : 0
   name                = split("/", var.gateway_id)[8]
