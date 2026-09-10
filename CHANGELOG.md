@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.8] - 2026-09-10
+### :bug: Bug Fixes
+- [`dc86a23`](https://github.com/terraform-az-modules/terraform-azurerm-aks/commit/dc86a23743978015c13d69709aeb891e5d939b41) - updated aurrerm version to 5.0 *(commit by [@karan-cd](https://github.com/karan-cd))*
+- [`1ef3d79`](https://github.com/terraform-az-modules/terraform-azurerm-aks/commit/1ef3d795ffb58e450ff45a0dbe14b1da7c15c782) - updated data.tf and diagnostic settings *(PR [#142](https://github.com/terraform-az-modules/terraform-azurerm-aks/pull/142) by [@maharshi-cd](https://github.com/maharshi-cd))*
+
+
 ## [v1.0.6] - 2026-04-24
 ### :bug: Bug Fixes
 - [`f8b4b19`](https://github.com/terraform-az-modules/terraform-azurerm-aks/commit/f8b4b19d271952e37a46aed7267faba746cff6ca) - added the dependabot dependcies and readme
@@ -49,3 +55,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backup and restore capabilities
 [v1.0.4]: https://github.com/terraform-az-modules/terraform-azurerm-aks/compare/v1.0.3...v1.0.4
 [v1.0.6]: https://github.com/terraform-az-modules/terraform-azurerm-aks/compare/v1.0.5...v1.0.6
+[v1.0.8]: https://github.com/terraform-az-modules/terraform-azurerm-aks/compare/v1.0.7...v1.0.8
