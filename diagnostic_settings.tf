@@ -37,9 +37,9 @@ resource "azurerm_monitor_diagnostic_setting" "diag" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "pip_diag" {
   depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
-  count                          = var.enable && var.diagnostic_setting_enable && length(try(data.azurerm_resources.aks_pip[0].resources, [])) > 0 ? 1 : 0
+  count                          = var.enable && var.diagnostic_setting_enable ? 1 : 0
   name                           = var.resource_position_prefix ? format("aks-pip-diag-log-%s", local.name) : format("%s-aks-pip-diag-log", local.name)
-  target_resource_id             = sort(data.azurerm_resources.aks_pip[0].resources[*].id)[0]
+  target_resource_id             = try(sort(data.azurerm_resources.aks_pip[0].resources[*].id)[0], null)
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
@@ -71,9 +71,9 @@ resource "azurerm_monitor_diagnostic_setting" "pip_diag" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "nsg_diag" {
   depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.main]
-  count                          = var.enable && var.diagnostic_setting_enable && var.nsg_diagnostic_setting_enable && length(try(data.azurerm_resources.aks_nsg[0].resources, [])) > 0 ? 1 : 0
+  count                          = var.enable && var.diagnostic_setting_enable && var.nsg_diagnostic_setting_enable ? 1 : 0
   name                           = var.resource_position_prefix ? format("aks-nsg-diag-log-%s", local.name) : format("%s-aks-nsg-diag-log", local.name)
-  target_resource_id             = sort(data.azurerm_resources.aks_nsg[0].resources[*].id)[0]
+  target_resource_id             = try(sort(data.azurerm_resources.aks_nsg[0].resources[*].id)[0], null)
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
@@ -99,9 +99,9 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_diag" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "nic_diag" {
   depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
-  count                          = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true && length(try(data.azurerm_resources.aks_nic[0].resources, [])) > 0 ? 1 : 0
+  count                          = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
   name                           = var.resource_position_prefix ? format("aks-nic-diag-log-%s", local.name) : format("%s-aks-nic-diag-log", local.name)
-  target_resource_id             = sort(data.azurerm_resources.aks_nic[0].resources[*].id)[0]
+  target_resource_id             = try(sort(data.azurerm_resources.aks_nic[0].resources[*].id)[0], null)
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
