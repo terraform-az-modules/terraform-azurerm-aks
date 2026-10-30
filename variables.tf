@@ -1034,6 +1034,24 @@ variable "diagnostic_setting_enable" {
   default     = false
 }
 
+variable "diagnostic_log_analytics_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether diagnostic settings send data to log_analytics_workspace_id. Does not change the OMS agent workspace configuration."
+}
+
+variable "pip_diagnostic_setting_enable" {
+  type        = bool
+  default     = true
+  description = "Whether to enable diagnostic settings for the discovered AKS public IP."
+}
+
+variable "nic_diagnostic_setting_enable" {
+  type        = bool
+  default     = true
+  description = "Whether to enable diagnostic settings for the discovered AKS NIC."
+}
+
 variable "nsg_diagnostic_setting_enable" {
   description = "Enable diagnostic settings for the AKS managed NSG."
   type        = bool

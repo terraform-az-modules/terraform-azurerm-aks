@@ -9,7 +9,7 @@ resource "azurerm_monitor_diagnostic_setting" "diag" {
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_workspace_id     = var.diagnostic_log_analytics_enabled ? var.log_analytics_workspace_id : null
   log_analytics_destination_type = var.log_analytics_destination_type
   dynamic "enabled_metric" {
     for_each = var.metric_enabled ? ["AllMetrics"] : []
@@ -29,6 +29,7 @@ resource "azurerm_monitor_diagnostic_setting" "diag" {
   }
 }
 
+
 ##-----------------------------------------------------------------------------
 ## Public IP diagnostic setting
 ## target_resource_id is sorted deterministically so the selection never
@@ -37,13 +38,13 @@ resource "azurerm_monitor_diagnostic_setting" "diag" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "pip_diag" {
   depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
-  count                          = var.enable && var.diagnostic_setting_enable && length(try(data.azurerm_resources.aks_pip[0].resources, [])) > 0 ? 1 : 0
+  count                          = (var.enable && var.diagnostic_setting_enable && var.pip_diagnostic_setting_enable) ? (length(try(data.azurerm_resources.aks_pip[0].resources, [])) > 0 ? 1 : 0) : 0
   name                           = var.resource_position_prefix ? format("aks-pip-diag-log-%s", local.name) : format("%s-aks-pip-diag-log", local.name)
   target_resource_id             = sort(data.azurerm_resources.aks_pip[0].resources[*].id)[0]
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_workspace_id     = var.diagnostic_log_analytics_enabled ? var.log_analytics_workspace_id : null
   log_analytics_destination_type = var.log_analytics_destination_type
   dynamic "enabled_metric" {
     for_each = var.metric_enabled ? ["AllMetrics"] : []
@@ -63,6 +64,7 @@ resource "azurerm_monitor_diagnostic_setting" "pip_diag" {
   }
 }
 
+
 ##-----------------------------------------------------------------------------
 ## NSG diagnostic setting
 ## count guards against an empty result (e.g. BYO-subnet clusters where AKS
@@ -71,13 +73,13 @@ resource "azurerm_monitor_diagnostic_setting" "pip_diag" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "nsg_diag" {
   depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.main]
-  count                          = var.enable && var.diagnostic_setting_enable && var.nsg_diagnostic_setting_enable && length(try(data.azurerm_resources.aks_nsg[0].resources, [])) > 0 ? 1 : 0
+  count                          = (var.enable && var.diagnostic_setting_enable && var.nsg_diagnostic_setting_enable) ? (length(try(data.azurerm_resources.aks_nsg[0].resources, [])) > 0 ? 1 : 0) : 0
   name                           = var.resource_position_prefix ? format("aks-nsg-diag-log-%s", local.name) : format("%s-aks-nsg-diag-log", local.name)
   target_resource_id             = sort(data.azurerm_resources.aks_nsg[0].resources[*].id)[0]
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_workspace_id     = var.diagnostic_log_analytics_enabled ? var.log_analytics_workspace_id : null
   log_analytics_destination_type = var.log_analytics_destination_type
   dynamic "enabled_log" {
     for_each = var.nsg_logs
@@ -87,10 +89,12 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_diag" {
     }
   }
 
+
   lifecycle {
     ignore_changes = [log_analytics_destination_type]
   }
 }
+
 
 ##-----------------------------------------------------------------------------
 ## NIC diagnostic setting
@@ -99,13 +103,13 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_diag" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_monitor_diagnostic_setting" "nic_diag" {
   depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.main, azurerm_kubernetes_cluster_node_pool.main]
-  count                          = var.enable && var.diagnostic_setting_enable && var.private_cluster_enabled == true && length(try(data.azurerm_resources.aks_nic[0].resources, [])) > 0 ? 1 : 0
+  count                          = (var.enable && var.diagnostic_setting_enable && var.nic_diagnostic_setting_enable && var.private_cluster_enabled == true) ? (length(try(data.azurerm_resources.aks_nic[0].resources, [])) > 0 ? 1 : 0) : 0
   name                           = var.resource_position_prefix ? format("aks-nic-diag-log-%s", local.name) : format("%s-aks-nic-diag-log", local.name)
   target_resource_id             = sort(data.azurerm_resources.aks_nic[0].resources[*].id)[0]
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_workspace_id     = var.diagnostic_log_analytics_enabled ? var.log_analytics_workspace_id : null
   log_analytics_destination_type = var.log_analytics_destination_type
   dynamic "enabled_metric" {
     for_each = var.metric_enabled ? ["AllMetrics"] : []
